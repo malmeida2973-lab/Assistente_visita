@@ -243,7 +243,7 @@
                     <div id="api-key-status" class="text-sm font-medium mt-2"></div>
                 </div>
                 
-                <!-- NOVO: Secção de Backup e Restauração -->
+                <!-- Secção de Backup e Restauração -->
                 <div class="border-t border-gray-200 pt-4 mt-4">
                     <h4 class="text-md font-medium text-gray-800 mb-2">Backup e Restauração</h4>
                     <p class="text-sm text-gray-600 mb-3">Salve todos os seus dados (tarefas, visitas, áudios, chave de API) num ficheiro, ou restaure a partir de um backup.</p>
@@ -504,13 +504,16 @@
             let isRecording = false;
 
             // =================================================================
-            // FUNÇÕES DE BACKUP / RESTAURAÇÃO (NOVO)
+            // FUNÇÕES DE BACKUP / RESTAURAÇÃO
             // =================================================================
 
             // Converte um Blob de áudio para um texto base64
             function blobToBase64(blob) {
                 return new Promise((resolve, reject) => {
-                    if (!blob) resolve(null);
+                    if (!blob) {
+                        resolve(null);
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.readAsDataURL(blob);
                     reader.onloadend = () => resolve(reader.result); // Formato: "data:audio/webm;base64,..."
@@ -553,7 +556,7 @@
             // Função para EXPORTAR todos os dados
             async function exportData() {
                 if (!db) {
-                    backupStatus.textContent = 'Erro: Base de dados não está pronta.'; 
+                    backupStatus.textContent = 'Erro: A base de dados ainda não carregou. Tente novamente em 2 segundos.'; 
                     backupStatus.className = 'text-sm font-medium mt-3 text-red-700';
                     return;
                 }
@@ -616,6 +619,16 @@
             function importData(event) {
                 const file = event.target.files[0];
                 if (!file) return;
+                
+                // --- CORREÇÃO (v6) ---
+                // Verifica se a base de dados já está pronta ANTES de ler o ficheiro
+                if (!db) {
+                    backupStatus.textContent = 'Erro: A base de dados ainda não carregou. Tente novamente em 2 segundos.';
+                    backupStatus.className = 'text-sm font-medium mt-3 text-red-700';
+                    event.target.value = null; // Limpa o input para permitir nova tentativa
+                    return;
+                }
+                // --- FIM DA CORREÇÃO ---
 
                 const reader = new FileReader();
                 reader.readAsText(file);
@@ -665,6 +678,10 @@
                             if (visit.audioBase64) {
                                 visit.audioBlob = base64ToBlob(visit.audioBase64);
                                 delete visit.audioBase64;
+                            }
+                            // Remover 'id' se existir, para deixar o autoIncrement funcionar
+                            if (visit.id) {
+                                delete visit.id;
                             }
                             visitStore.add(visit);
                         });
