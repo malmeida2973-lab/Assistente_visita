@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente de Visita com Agendamento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fonte Inter para um visual mais moderno */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo customizado para as caixas de texto */
+        .transcript-box {
+            min-height: 150px;
+        }
+        /* Esconde o modal por padrão */
+        .modal {
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        .modal.flex {
+            display: flex;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-5xl w-full mx-auto">
+        
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-indigo-700">Assistente de Visita</h1>
+            <p class="text-gray-600 mt-2">Agende, grave, transcreva e salve o histórico de visitas a clientes.</p>
+        </header>
+
+        <!-- =================================================================
+        SEÇÃO: AGENDAMENTOS
+        ================================================================== -->
+        <div class="border-b-2 border-gray-200 pb-6 mb-6">
+            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Agendamentos</h2>
+            
+            <!-- Formulário para Agendar Nova Visita -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Agendar Nova Visita</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="scheduledClientName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Cliente (Obrigatório)</label>
+                        <input type="text" id="scheduledClientName" class="mt-1 block w-full input-field" placeholder="Empresa X">
+                    </div>
+                    <div>
+                        <label for="scheduledContactPerson" class="block text-sm font-medium text-gray-700 mb-1">Pessoa de Contato (Obrigatório)</label>
+                        <input type="text" id="scheduledContactPerson" class="mt-1 block w-full input-field" placeholder="Sr. João Silva">
+                    </div>
+                    <div>
+                        <label for="scheduledEmail" class="block text-sm font-medium text-gray-700 mb-1">Email (Opcional)</label>
+                        <input type="email" id="scheduledEmail" class="mt-1 block w-full input-field" placeholder="joao.silva@empresa.com">
+                    </div>
+                </div>
+                <div class="text-right mt-4">
+                    <button id="saveScheduleButton" class="w-full sm:w-auto flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-300">
+                        Agendar Visita
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista de Visitas Agendadas (A Fazer) -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Visitas Agendadas (A Fazer)</h3>
+                <div id="scheduled-visits-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                    <p id="scheduled-loading" class="text-gray-500">Carregando agendamentos...</p>
+                    <!-- Agendamentos serão inseridos aqui -->
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================
+        SEÇÃO DE GRAVAÇÃO (MODIFICADA)
+        ================================================================== -->
+        <div class="border-b-2 border-gray-200 pb-6 mb-6">
+            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Gravação da Visita</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <!-- Campos preenchidos pelo agendamento ou manualmente -->
+                <div>
+                    <label for="clientNameInput" class="block text-sm font-medium text-gray-700 mb-1">Nome do Cliente (Obrigatório):</label>
+                    <input type="text" id="clientNameInput" class="mt-1 block w-full input-field" placeholder="Carregado do agendamento ou manual">
+                </div>
+                <div>
+                    <label for="contactPersonInput" class="block text-sm font-medium text-gray-700 mb-1">Pessoa de Contato:</label>
+                    <input type="text" id="contactPersonInput" class="mt-1 block w-full input-field" placeholder="Carregado do agendamento">
+                </div>
+                <div>
+                    <label for="emailInput" class="block text-sm font-medium text-gray-700 mb-1">Email:</label>
+                    <input type="email" id="emailInput" class="mt-1 block w-full input-field" placeholder="Carregado do agendamento">
+                </div>
+                <!-- Idioma -->
+                <div class="md:col-span-3">
+                    <label for="languageSelect" class="block text-sm font-medium text-gray-700 mb-1">Idioma da Visita:</label>
+                    <select id="languageSelect" class="mt-1 block w-full max-w-xs pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="pt-BR" selected>Português (Brasil)</option>
+                        <option value="en-US">English (United States)</option>
+                        <option value="es-ES">Español (España)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Controles e Timer -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-700">Tempo:</span>
+                    <span id="timerDisplay" class="text-2xl font-bold text-red-600">00:00:00</span>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <button id="startButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                        Iniciar Gravação
+                    </button>
+                    <button id="stopButton" disabled class="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        Parar e Salvar Visita
+                    </button>
+                    <!-- NOVO BOTÃO DE SALVAR MANUAL -->
+                    <button id="saveManualButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        Salvar Anotação Manual
+                    </button>
+                    <button id="clearButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Limpar Campos de Gravação
+                    </button>
+                </div>
+            </div>
+
+            <div id="status" class="text-center text-gray-700 font-medium mb-4">
+                Status: Ocioso
+            </div>
+
+            <!-- Caixas de Transcrição -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="interim-transcript" class="block text-sm font-medium text-gray-700 mb-1">Transcrição em tempo real (rascunho):</label>
+                    <div id="interim-transcript" class="w-full p-4 bg-gray-100 rounded-lg transcript-box border border-gray-300 text-gray-600 italic"></div>
+                </div>
+                <div>
+                    <label for="final-transcript" class="block text-sm font-medium text-gray-700 mb-1">Transcrição Final / Anotação Manual (Editável):</label>
+                    <textarea id="final-transcript" class="w-full p-4 bg-white rounded-lg transcript-box border-2 border-indigo-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500" style="min-height: 150px;" placeholder="A transcrição final aparecerá aqui... ou digite sua anotação manual."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================
+        SEÇÃO DO HISTÓRICO (VISITAS CONCLUÍDAS)
+        ================================================================== -->
+        <div id="history-section" class="mt-8">
+            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Histórico de Visitas Salvas (Concluídas)</h2>
+            <div id="history-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                <!-- Itens do histórico serão inseridos aqui pelo JavaScript -->
+                <p id="history-loading" class="text-gray-500">Carregando histórico do banco de dados...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+    MODAIS
+    ================================================================== -->
+
+    <!-- Modal: Ver Detalhes da Visita -->
+    <div id="visit-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="modal-overlay fixed inset-0"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl z-10 max-h-[90vh] flex flex-col">
+            <!-- Header do Modal -->
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="modal-title" class="text-xl font-bold text-indigo-700">Detalhes da Visita</h3>
+                <button id="modal-close-button" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <!-- Conteúdo do Modal -->
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <p class="text-sm text-gray-600">Cliente: <span id="modal-client-name" class="font-medium text-gray-900"></span></p>
+                <p class="text-sm text-gray-600">Pessoa de Contato: <span id="modal-contact-person" class="font-medium text-gray-900"></span></p>
+                <p class="text-sm text-gray-600">Email: <span id="modal-email" class="font-medium text-gray-900"></span></p>
+                <p class="text-sm text-gray-600">Data: <span id="modal-date-time" class="font-medium text-gray-900"></span></p>
+                
+                <!-- Player de Áudio (AGORA OCULTÁVEL) -->
+                <div id="modal-audio-section">
+                    <h4 class="text-md font-medium text-gray-700 mb-2">Áudio da Visita:</h4>
+                    <audio id="modalAudioPlayer" controls class="w-full"></audio>
+                </div>
+
+                <div>
+                    <label for="modalTranscriptTextarea" class="block text-sm font-medium text-gray-700 mb-1">Transcrição (Editável):</aabel>
+                    <textarea id="modalTranscriptTextarea" class="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="10"></textarea>
+                </div>
+                
+                <div id="modal-status-message" class="text-sm text-green-700 font-medium"></div>
+
+            </div>
+
+            <!-- Footer do Modal (Botões de Ação) -->
+            <div class="flex flex-wrap justify-end items-center gap-3 p-4 bg-gray-50 border-t rounded-b-2xl">
+                <!-- NOVO BOTÃO DE SALVAR EDIÇÕES -->
+                <button id="modal-save-changes-button" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    Salvar Edições
+                </button>
+                <button id="modal-copy-button" class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    Copiar Transcrição
+                </button>
+                <button id="modal-export-button" class="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    Exportar Relatório (TXT)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmação de Apagar -->
+    <div id="delete-confirm-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="modal-overlay fixed inset-0"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm z-10">
+            <div class="p-6 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Apagar Registro?</h3>
+                <p id="delete-confirm-text" class="text-sm text-gray-600 mb-6">
+                    Tem certeza? Esta ação não pode ser desfeita.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <button id="delete-confirm-cancel" class="py-2 px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition duration-300">
+                        Cancelar
+                    </button>
+                    <button id="delete-confirm-ok" class="py-2 px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-md transition duration-300">
+                        Apagar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Configuração da API de Reconhecimento de Fala ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                document.getElementById('status').textContent = 'Erro: Seu navegador não suporta a API de Reconhecimento de Fala. Use o Google Chrome.';
+                document.getElementById('startButton').disabled = true;
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+
+            // --- Configuração da API de Gravação de Mídia ---
+            let mediaRecorder;
+            let audioChunks = [];
+            let audioStream;
+            
+            // --- Variáveis do Temporizador ---
+            let timerInterval;
+            let startTime;
+
+            // --- Variáveis do Banco de Dados ---
+            let db;
+            const DB_NAME = "VisitAssistantDB";
+            const DB_VERSION = 2; 
+            const VISIT_STORE = "visits"; // Visitas concluídas
+            const SCHEDULE_STORE = "scheduledVisits"; // Visitas agendadas
+            
+            let currentVisitIdToExport = null; // Usado pelo Modal
+            let currentVisitDataToExport = null; // Usado pelo Modal
+            let currentScheduledVisitId = null; // ID do agendamento em progresso
+
+            // --- Elementos da UI (Agendamento) ---
+            const scheduledClientNameInput = document.getElementById('scheduledClientName');
+            const scheduledContactPersonInput = document.getElementById('scheduledContactPerson');
+            const scheduledEmailInput = document.getElementById('scheduledEmail');
+            const saveScheduleButton = document.getElementById('saveScheduleButton');
+            const scheduledVisitsList = document.getElementById('scheduled-visits-list');
+            const scheduledLoading = document.getElementById('scheduled-loading');
+
+            // --- Elementos da UI (Gravação) ---
+            const startButton = document.getElementById('startButton');
+            const stopButton = document.getElementById('stopButton');
+            const clearButton = document.getElementById('clearButton');
+            const saveManualButton = document.getElementById('saveManualButton'); // <<< NOVO
+            const statusDiv = document.getElementById('status');
+            const interimTranscriptDiv = document.getElementById('interim-transcript');
+            const finalTranscriptDiv = document.getElementById('final-transcript');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const languageSelect = document.getElementById('languageSelect');
+            const clientNameInput = document.getElementById('clientNameInput');
+            const contactPersonInput = document.getElementById('contactPersonInput'); 
+            const emailInput = document.getElementById('emailInput'); 
+
+            // --- Elementos da UI (Histórico) ---
+            const historyList = document.getElementById('history-list');
+            const historyLoading = document.getElementById('history-loading');
+
+            // --- Elementos do Modal de Visita ---
+            const visitModal = document.getElementById('visit-modal');
+            const modalCloseButton = document.getElementById('modal-close-button');
+            const modalOverlay = visitModal.querySelector('.modal-overlay');
+            const modalTitle = document.getElementById('modal-title');
+            const modalClientName = document.getElementById('modal-client-name');
+            const modalContactPerson = document.getElementById('modal-contact-person'); 
+            const modalEmail = document.getElementById('modal-email'); 
+            const modalDateTime = document.getElementById('modal-date-time');
+            const modalAudioSection = document.getElementById('modal-audio-section'); // <<< NOVO
+            const modalAudioPlayer = document.getElementById('modalAudioPlayer');
+            const modalTranscriptTextarea = document.getElementById('modalTranscriptTextarea');
+            const modalSaveChangesButton = document.getElementById('modal-save-changes-button'); // <<< NOVO
+            const modalCopyButton = document.getElementById('modal-copy-button');
+            const modalExportButton = document.getElementById('modal-export-button');
+            const modalStatusMessage = document.getElementById('modal-status-message'); // <<< NOVO
+            
+            // --- Elementos do Modal de Apagar ---
+            const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+            const deleteConfirmText = document.getElementById('delete-confirm-text');
+            const deleteConfirmCancel = document.getElementById('delete-confirm-cancel');
+            const deleteConfirmOk = document.getElementById('delete-confirm-ok');
+            const deleteModalOverlay = deleteConfirmModal.querySelector('.modal-overlay');
+            let deleteConfig = { id: null, store: null }; 
+
+            let finalTranscript = '';
+            let isRecording = false;
+
+            // =================================================================
+            // FUNÇÕES DO BANCO DE DADOS (IndexedDB)
+            // =================================================================
+
+            function initDB() {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = (event) => {
+                    console.error("Erro ao abrir o IndexedDB:", event);
+                    statusDiv.textContent = 'Erro: Não foi possível carregar o banco de dados.';
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    console.log("Banco de dados aberto com sucesso.");
+                    loadHistory();
+                    loadScheduledVisits(); 
+                };
+
+                request.onupgradeneeded = (event) => {
+                    let db = event.target.result;
+                    if (!db.objectStoreNames.contains(VISIT_STORE)) {
+                        db.createObjectStore(VISIT_STORE, { keyPath: 'id', autoIncrement: true });
+                        console.log(`Object store '${VISIT_STORE}' criado.`);
+                    }
+                    if (!db.objectStoreNames.contains(SCHEDULE_STORE)) {
+                        db.createObjectStore(SCHEDULE_STORE, { keyPath: 'id', autoIncrement: true });
+                        console.log(`Object store '${SCHEDULE_STORE}' criado.`);
+                    }
+                };
+            }
+
+            // --- Funções de Visitas CONCLUÍDAS (History) ---
+
+            function saveCompletedVisit(visitData) {
+                if (!db) return;
+                const transaction = db.transaction([VISIT_STORE], 'readwrite');
+                const store = transaction.objectStore(VISIT_STORE);
+                const request = store.add(visitData);
+
+                request.onsuccess = () => {
+                    console.log("Visita concluída salva com sucesso!");
+                    statusDiv.textContent = `Status: Visita ao cliente '${visitData.clientName}' salva!`;
+                    
+                    if (currentScheduledVisitId !== null) {
+                        updateScheduledVisitStatus(currentScheduledVisitId, 'completed');
+                        currentScheduledVisitId = null; 
+                    }
+                    
+                    loadHistory(); 
+                    clearCurrentRecording();
+                };
+                request.onerror = (event) => {
+                    console.error("Erro ao salvar visita concluída:", event.target.error);
+                    statusDiv.textContent = 'Erro ao salvar a visita no banco de dados.';
+                };
+            }
+
+            function loadHistory() {
+                if (!db) return;
+                const transaction = db.transaction([VISIT_STORE], 'readonly');
+                const store = transaction.objectStore(VISIT_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const visits = event.target.result;
+                    historyList.innerHTML = ''; 
+                    if (visits.length === 0) {
+                        historyLoading.textContent = 'Nenhuma visita concluída ainda.';
+                        historyList.appendChild(historyLoading);
+                    } else {
+                        visits.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+                        visits.forEach(visit => {
+                            const item = document.createElement('div');
+                            item.className = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm';
+                            const visitDate = new Date(visit.dateTime);
+                            const formattedDate = visitDate.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                            item.innerHTML = `
+                                <div class="mb-3 sm:mb-0">
+                                    <h4 class="font-bold text-lg text-indigo-700">${visit.clientName}</h4>
+                                    <p class="text-sm text-gray-500">Contato: ${visit.contactPerson || 'N/A'}</p>
+                                    <p class="text-sm text-gray-500">${formattedDate}</p>
+                                    ${!visit.audioBlob ? '<span class="text-xs font-medium bg-blue-100 text-blue-700 py-0.5 px-2 rounded-full">Anotação Manual</span>' : ''}
+                                </div>
+                                <div class="flex gap-2 w-full sm:w-auto">
+                                    <button data-id="${visit.id}" class="view-details-btn w-1/2 sm:w-auto text-sm bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-lg transition duration-300">Ver Detalhes</button>
+                                    <button data-id="${visit.id}" data-store="${VISIT_STORE}" class="delete-btn w-1/2 sm:w-auto text-sm bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-3 rounded-lg transition duration-300">Apagar</button>
+                                </div>
+                            `;
+                            historyList.appendChild(item);
+                        });
+                    }
+                };
+                request.onerror = (event) => {
+                    console.error("Erro ao carregar histórico:", event.target.error);
+                    historyLoading.textContent = 'Erro ao carregar o histórico.';
+                };
+            }
+
+            function getVisitById(id, callback) {
+                if (!db) return;
+                const transaction = db.transaction([VISIT_STORE], 'readonly');
+                const store = transaction.objectStore(VISIT_STORE);
+                const request = store.get(id);
+                request.onsuccess = (event) => callback(event.target.result);
+                request.onerror = (event) => console.error("Erro ao buscar visita:", event.target.error);
+            }
+
+            // <<< NOVA FUNÇÃO PARA SALVAR EDIÇÕES DO MODAL >>>
+            function updateVisitTranscript(id, newTranscript) {
+                if (!db) return;
+                const transaction = db.transaction([VISIT_STORE], 'readwrite');
+                const store = transaction.objectStore(VISIT_STORE);
+                const request = store.get(id);
+
+                request.onsuccess = (event) => {
+                    const data = event.target.result;
+                    if (data) {
+                        data.transcript = newTranscript;
+                        const updateRequest = store.put(data);
+                        updateRequest.onsuccess = () => {
+                            console.log(`Transcrição da visita ${id} atualizada.`);
+                            modalStatusMessage.textContent = 'Transcrição salva com sucesso!';
+                            setTimeout(() => { modalStatusMessage.textContent = ''; }, 3000);
+                        };
+                         updateRequest.onerror = (event) => {
+                            console.error("Erro ao salvar edição:", event.target.error);
+                            modalStatusMessage.textContent = 'Erro ao salvar!';
+                        };
+                    }
+                };
+                 request.onerror = (event) => {
+                    console.error("Erro ao buscar visita para editar:", event.target.error);
+                    modalStatusMessage.textContent = 'Erro ao buscar registro!';
+                };
+            }
+
+
+            // --- Funções de Visitas AGENDADAS (Schedule) ---
+
+            function saveScheduledVisit(scheduleData) {
+                if (!db) return;
+                const transaction = db.transaction([SCHEDULE_STORE], 'readwrite');
+                const store = transaction.objectStore(SCHEDULE_STORE);
+                const request = store.add(scheduleData);
+
+                request.onsuccess = () => {
+                    console.log("Agendamento salvo com sucesso!");
+                    statusDiv.textContent = `Status: Visita para '${scheduleData.clientName}' agendada!`;
+                    loadScheduledVisits(); 
+                    scheduledClientNameInput.value = '';
+                    scheduledContactPersonInput.value = '';
+                    scheduledEmailInput.value = '';
+                };
+                request.onerror = (event) => {
+                    console.error("Erro ao salvar agendamento:", event.target.error);
+                    statusDiv.textContent = 'Erro ao salvar o agendamento.';
+                };
+            }
+
+            function loadScheduledVisits() {
+                if (!db) return;
+                const transaction = db.transaction([SCHEDULE_STORE], 'readonly');
+                const store = transaction.objectStore(SCHEDULE_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const allSchedules = event.target.result;
+                    const pendingSchedules = allSchedules.filter(s => s.status === 'scheduled');
+                    scheduledVisitsList.innerHTML = ''; 
+                    
+                    if (pendingSchedules.length === 0) {
+                        scheduledLoading.textContent = 'Nenhuma visita agendada pendente.';
+                        scheduledVisitsList.appendChild(scheduledLoading);
+                    } else {
+                        pendingSchedules.sort((a, b) => a.clientName.localeCompare(b.clientName)); 
+                        
+                        pendingSchedules.forEach(schedule => {
+                            const item = document.createElement('div');
+                            item.className = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm';
+                            
+                            item.innerHTML = `
+                                <div class="mb-3 sm:mb-0">
+                                    <h4 class="font-bold text-lg text-indigo-700">${schedule.clientName}</h4>
+                                    <p class="text-sm text-gray-600">Contato: ${schedule.contactPerson}</p>
+                                    <p class="text-sm text-gray-500">${schedule.email || 'Sem email'}</p>
+                                </div>
+                                <div class="flex gap-2 w-full sm:w-auto">
+                                    <button data-id="${schedule.id}" class="load-schedule-btn w-1/2 sm:w-auto text-sm bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg transition duration-300">Carregar e Iniciar</button>
+                                    <button data-id="${schedule.id}" data-store="${SCHEDULE_STORE}" class="delete-btn w-1/2 sm:w-auto text-sm bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-3 rounded-lg transition duration-300">Apagar</button>
+                                </div>
+                            `;
+                            scheduledVisitsList.appendChild(item);
+                        });
+                    }
+                };
+                request.onerror = (event) => {
+                    console.error("Erro ao carregar agendamentos:", event.target.error);
+                    scheduledLoading.textContent = 'Erro ao carregar agendamentos.';
+                };
+            }
+
+            function getScheduledVisitById(id, callback) {
+                if (!db) return;
+                const transaction = db.transaction([SCHEDULE_STORE], 'readonly');
+                const store = transaction.objectStore(SCHEDULE_STORE);
+                const request = store.get(id);
+                request.onsuccess = (event) => callback(event.target.result);
+                request.onerror = (event) => console.error("Erro ao buscar agendamento:", event.target.error);
+            }
+
+            function updateScheduledVisitStatus(id, newStatus) {
+                if (!db) return;
+                const transaction = db.transaction([SCHEDULE_STORE], 'readwrite');
+                const store = transaction.objectStore(SCHEDULE_STORE);
+                const request = store.get(id);
+
+                request.onsuccess = (event) => {
+                    const data = event.target.result;
+                    if (data) {
+                        data.status = newStatus;
+                        const updateRequest = store.put(data);
+                        updateRequest.onsuccess = () => {
+                            console.log(`Agendamento ${id} atualizado para ${newStatus}`);
+                            loadScheduledVisits(); 
+                        };
+                    }
+                };
+            }
+
+            // --- Função Genérica de Apagar ---
+
+            function deleteFromDB(id, storeName) {
+                if (!db) return;
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.delete(id);
+
+                request.onsuccess = () => {
+                    console.log(`Registro ${id} apagado da store ${storeName}`);
+                    statusDiv.textContent = 'Status: Registro apagado do histórico.';
+                    if (storeName === VISIT_STORE) {
+                        loadHistory();
+                    } else if (storeName === SCHEDULE_STORE) {
+                        loadScheduledVisits();
+                    }
+                };
+                request.onerror = (event) => {
+                    console.error(`Erro ao apagar ${id} da store ${storeName}:`, event.target.error);
+                };
+            }
+
+            // =================================================================
+            // FUNÇÕES DE GRAVAÇÃO E TRANSCRIÇÃO
+            // =================================================================
+
+            // --- Funções do Temporizador ---
+            const formatTime = (totalSeconds) => {
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = Math.floor(totalSeconds % 60);
+                return [hours, minutes, seconds].map(v => v < 10 ? "0" + v : v).join(":");
+            };
+            const startTimer = () => {
+                startTime = Date.now();
+                timerDisplay.textContent = '00:00:00';
+                timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    timerDisplay.textContent = formatTime(elapsed);
+                }, 1000);
+            };
+            const stopTimer = () => {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            };
+            
+            // --- Event Handler de Troca de Idioma ---
+            languageSelect.addEventListener('change', () => {
+                if (!isRecording) {
+                    recognition.lang = languageSelect.value;
+                    statusDiv.textContent = `Status: Idioma de transcrição definido para ${languageSelect.options[languageSelect.selectedIndex].text}. Pronto.`;
+                } else {
+                    statusDiv.textContent = `AVISO: Pare a gravação para trocar de idioma.`;
+                    languageSelect.value = recognition.lang;
+                }
+            });
+
+            // --- Funções da API de Transcrição ---
+            recognition.onstart = () => {
+                statusDiv.textContent = `Status: Ouvindo e Gravando... Fale em ${languageSelect.options[languageSelect.selectedIndex].text}.`;
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    try { recognition.start(); } catch(e) { console.error("Erro ao reiniciar recognition:", e); stopAndSaveVisit(); }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erro no reconhecimento de fala:', event.error);
+                if (event.error === 'not-allowed') {
+                    statusDiv.textContent = 'Erro: Permissão do microfone negada. Verifique o ícone do cadeado (🔒).';
+                    stopAndSaveVisit();
+                } else if (event.error === 'no-speech') {
+                    statusDiv.textContent = 'Status: Nenhum áudio detectado.';
+                } else {
+                    statusDiv.textContent = `Erro: ${event.error}`;
+                }
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let currentFinalText = finalTranscriptDiv.value;
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    const transcriptPart = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        let cleanedPart = transcriptPart.trim();
+                        if (!/[.!?]$/.test(cleanedPart)) { cleanedPart += '.'; }
+                        currentFinalText += ' ' + cleanedPart;
+                    } else {
+                        interimTranscript += transcriptPart;
+                    }
+                }
+                finalTranscriptDiv.value = currentFinalText.trim().replace(/\. /g, '.\n');
+                interimTranscriptDiv.textContent = interimTranscript;
+            };
+
+            // --- Funções de Controle (Start / Stop) ---
+            const startRecording = async () => {
+                if (isRecording) return;
+                
+                const clientName = clientNameInput.value.trim();
+                if (!clientName) {
+                    statusDiv.textContent = 'Status: ERRO! Por favor, insira o Nome do Cliente para iniciar.';
+                    clientNameInput.focus();
+                    clientNameInput.classList.add('border-red-500', 'ring-red-500');
+                    return;
+                }
+                clientNameInput.classList.remove('border-red-500', 'ring-red-500');
+
+                try {
+                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    isRecording = true;
+                    finalTranscript = ''; 
+                    audioChunks = [];
+                    startTimer(); 
+                    
+                    mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
+                    mediaRecorder.ondataavailable = (event) => { audioChunks.push(event.data); };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const finalTranscriptText = finalTranscriptDiv.value.trim();
+                        
+                        const visitData = {
+                            clientName: clientNameInput.value.trim(),
+                            contactPerson: contactPersonInput.value.trim(), 
+                            email: emailInput.value.trim(), 
+                            dateTime: new Date().toISOString(),
+                            transcript: finalTranscriptText,
+                            audioBlob: audioBlob
+                        };
+                        
+                        saveCompletedVisit(visitData); 
+                        
+                        audioStream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    recognition.lang = languageSelect.value;
+                    recognition.start();
+                    mediaRecorder.start();
+                    
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    saveManualButton.disabled = true; // <<< DESABILITA SALVAR MANUAL
+                    languageSelect.disabled = true; 
+                    clientNameInput.disabled = true;
+                    contactPersonInput.disabled = true;
+                    emailInput.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    saveManualButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    stopButton.classList.remove('disabled:opacity-50', 'disabled:cursor-not-allowed');
+
+                } catch (err) {
+                    console.error('Erro ao iniciar gravação:', err);
+                    statusDiv.textContent = (err.name === "NotAllowedError") ? 'Erro: Permissão do microfone negada.' : 'Erro: Não foi possível iniciar o microfone.';
+                    isRecording = false; stopTimer();
+                }
+            };
+
+            const stopAndSaveVisit = () => {
+                if (!isRecording) return;
+                isRecording = false;
+                stopTimer();
+                if (recognition) recognition.stop();
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                saveManualButton.disabled = false; // <<< HABILITA SALVAR MANUAL
+                languageSelect.disabled = false;
+                clientNameInput.disabled = false;
+                contactPersonInput.disabled = false;
+                emailInput.disabled = false;
+                startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                saveManualButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                stopButton.classList.add('disabled:opacity-50', 'disabled:cursor-not-allowed');
+                statusDiv.textContent = 'Status: Gravação parada. Salvando visita no banco de dados...';
+            };
+
+            // <<< NOVA FUNÇÃO PARA SALVAR VISITA MANUAL >>>
+            const saveManualVisit = () => {
+                const clientName = clientNameInput.value.trim();
+                if (!clientName) {
+                    statusDiv.textContent = 'Status: ERRO! Por favor, insira o Nome do Cliente para salvar.';
+                    clientNameInput.focus();
+                    clientNameInput.classList.add('border-red-500', 'ring-red-500');
+                    return;
+                }
+                clientNameInput.classList.remove('border-red-500', 'ring-red-500');
+
+                const finalTranscriptText = finalTranscriptDiv.value.trim();
+                 if (!finalTranscriptText) {
+                    statusDiv.textContent = 'Status: ERRO! Não há anotação para salvar.';
+                    finalTranscriptDiv.focus();
+                    return;
+                }
+
+                const visitData = {
+                    clientName: clientNameInput.value.trim(),
+                    contactPerson: contactPersonInput.value.trim(), 
+                    email: emailInput.value.trim(), 
+                    dateTime: new Date().toISOString(),
+                    transcript: finalTranscriptText,
+                    audioBlob: null // <<< SEM ÁUDIO
+                };
+                
+                saveCompletedVisit(visitData); // Reutiliza a mesma função de salvar
+            };
+
+            // --- Função de Limpeza ---
+            function clearCurrentRecording() {
+                finalTranscript = '';
+                finalTranscriptDiv.value = '';
+                interimTranscriptDiv.textContent = '';
+                audioChunks = [];
+                clientNameInput.value = '';
+                contactPersonInput.value = '';
+                emailInput.value = '';
+                currentScheduledVisitId = null; 
+            };
+
+            // =================================================================
+            // FUNÇÕES E EVENTOS DOS MODAIS
+            // =================================================================
+
+            function showModal(modalElement) {
+                modalElement.classList.add('flex');
+                setTimeout(() => modalElement.classList.add('opacity-100'), 10);
+            }
+
+            function hideModal(modalElement) {
+                modalElement.classList.remove('opacity-100');
+                setTimeout(() => modalElement.classList.remove('flex'), 300);
+            }
+
+            // --- Modal de Visita ---
+            modalCloseButton.addEventListener('click', () => hideModal(visitModal));
+            modalOverlay.addEventListener('click', () => hideModal(visitModal));
+            
+            modalCopyButton.addEventListener('click', () => {
+                const textToCopy = modalTranscriptTextarea.value;
+                if (!textToCopy) return;
+                try {
+                    navigator.clipboard.writeText(textToCopy);
+                    modalStatusMessage.textContent = 'Transcrição copiada!';
+                    setTimeout(() => { modalStatusMessage.textContent = ''; }, 3000);
+                } catch (err) { console.error('Falha ao copiar: ', err); }
+            });
+
+            // <<< NOVO EVENTO PARA SALVAR EDIÇÕES DO MODAL >>>
+            modalSaveChangesButton.addEventListener('click', () => {
+                if (currentVisitIdToExport) { // Reutiliza o ID que já está carregado no modal
+                    const newTranscript = modalTranscriptTextarea.value;
+                    updateVisitTranscript(currentVisitIdToExport, newTranscript);
+                }
+            });
+            
+            modalExportButton.addEventListener('click', () => {
+                if (!currentVisitDataToExport) return;
+                
+                const visit = currentVisitDataToExport;
+                const transcriptText = modalTranscriptTextarea.value.trim(); 
+                const visitDate = new Date(visit.dateTime);
+                
+                const exportContent = `
+=============================================
+RELATÓRIO DE VISITA
+=============================================
+Cliente: ${visit.clientName}
+Pessoa de Contato: ${visit.contactPerson || 'N/A'}
+Email: ${visit.email || 'N/A'}
+Data/Hora: ${visitDate.toLocaleString('pt-BR')}
+=============================================
+
+# TRANSCRIÇÃO DA VISITA
+---------------------------------------------
+${transcriptText || 'Nenhuma transcrição salva.'}
+`;
+                const cleanClientName = visit.clientName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                const dateString = visitDate.toISOString().slice(0, 10);
+                const filename = `relatorio_visita_${cleanClientName}_${dateString}.txt`;
+                
+                const blob = new Blob([exportContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                modalStatusMessage.textContent = `Relatório ${filename} exportado!`;
+                setTimeout(() => { modalStatusMessage.textContent = ''; }, 3000);
+            });
+
+            // --- Modal de Apagar ---
+            deleteConfirmCancel.addEventListener('click', () => {
+                deleteConfig = { id: null, store: null };
+                hideModal(deleteConfirmModal);
+            });
+            deleteModalOverlay.addEventListener('click', () => {
+                deleteConfig = { id: null, store: null };
+                hideModal(deleteConfirmModal);
+            });
+            deleteConfirmOk.addEventListener('click', () => {
+                if (deleteConfig.id !== null && deleteConfig.store !== null) {
+                    deleteFromDB(deleteConfig.id, deleteConfig.store);
+                }
+                deleteConfig = { id: null, store: null };
+                hideModal(deleteConfirmModal);
+            });
+
+
+            // =================================================================
+            // EVENT LISTENERS GLOBAIS
+            // =================================================================
+
+            // --- Botão Salvar Agendamento ---
+            saveScheduleButton.addEventListener('click', () => {
+                const clientName = scheduledClientNameInput.value.trim();
+                const contactPerson = scheduledContactPersonInput.value.trim();
+                const email = scheduledEmailInput.value.trim();
+
+                if (!clientName || !contactPerson) {
+                    statusDiv.textContent = 'Status: ERRO! Cliente e Pessoa de Contato são obrigatórios para agendar.';
+                    return;
+                }
+                
+                const scheduleData = {
+                    clientName: clientName,
+                    contactPerson: contactPerson,
+                    email: email,
+                    status: 'scheduled' 
+                };
+                
+                saveScheduledVisit(scheduleData);
+            });
+
+            // --- Botões da Lista de Agendamentos (Delegação) ---
+            scheduledVisitsList.addEventListener('click', (event) => {
+                const target = event.target;
+                
+                // Botão "Carregar e Iniciar"
+                const loadButton = target.closest('.load-schedule-btn');
+                if (loadButton) {
+                    const id = parseInt(loadButton.dataset.id);
+                    getScheduledVisitById(id, (schedule) => {
+                        if (schedule) {
+                            clientNameInput.value = schedule.clientName;
+                            contactPersonInput.value = schedule.contactPerson;
+                            emailInput.value = schedule.email;
+                            currentScheduledVisitId = schedule.id; 
+                            
+                            statusDiv.textContent = `Status: Agendamento de '${schedule.clientName}' carregado. Pronto para gravar.`;
+                            clientNameInput.focus();
+                            window.scrollTo({ top: clientNameInput.offsetTop - 20, behavior: 'smooth' });
+                        }
+                    });
+                }
+                
+                // Botão "Apagar" (Agendamento)
+                const deleteButton = target.closest('.delete-btn');
+                if (deleteButton) {
+                    deleteConfig.id = parseInt(deleteButton.dataset.id);
+                    deleteConfig.store = deleteButton.dataset.store;
+                    deleteConfirmText.textContent = "Tem certeza que deseja apagar este AGENDAMENTO? Esta ação não pode ser desfeita.";
+                    showModal(deleteConfirmModal);
+                }
+            });
+
+            // --- Botões da Gravação ---
+            startButton.addEventListener('click', startRecording);
+            stopButton.addEventListener('click', stopAndSaveVisit);
+            saveManualButton.addEventListener('click', saveManualVisit); // <<< NOVO EVENTO
+            
+            clearButton.addEventListener('click', () => {
+                if (isRecording) stopAndSaveVisit(); 
+                clearCurrentRecording(); 
+                timerDisplay.textContent = '00:00:00';
+                statusDiv.textContent = 'Status: Campos de gravação limpos. Pronto para começar.';
+            });
+
+            // --- Botões do Histórico (Delegação) ---
+            historyList.addEventListener('click', (event) => {
+                const target = event.target;
+                
+                // Botão "Ver Detalhes" (Visita Concluída)
+                const viewButton = target.closest('.view-details-btn');
+                if (viewButton) {
+                    const id = parseInt(viewButton.dataset.id);
+                    getVisitById(id, (visit) => {
+                        if (visit) {
+                            currentVisitIdToExport = visit.id; 
+                            currentVisitDataToExport = visit; 
+                            modalStatusMessage.textContent = ''; // Limpa status anterior
+                            
+                            modalTitle.textContent = `Detalhes: ${visit.clientName}`;
+                            modalClientName.textContent = visit.clientName;
+                            modalContactPerson.textContent = visit.contactPerson || 'N/A';
+                            modalEmail.textContent = visit.email || 'N/A';
+                            modalDateTime.textContent = new Date(visit.dateTime).toLocaleString('pt-BR');
+                            modalTranscriptTextarea.value = visit.transcript;
+                            
+                            // <<< LÓGICA PARA ESCONDER/MOSTRAR PLAYER >>>
+                            if (visit.audioBlob) {
+                                const audioUrl = URL.createObjectURL(visit.audioBlob);
+                                modalAudioPlayer.src = audioUrl;
+                                modalAudioSection.style.display = 'block';
+                            } else {
+                                modalAudioPlayer.src = '';
+                                modalAudioSection.style.display = 'none';
+                            }
+                            showModal(visitModal);
+                        }
+                    });
+                }
+                
+                // Botão "Apagar" (Visita Concluída)
+                const deleteButton = target.closest('.delete-btn');
+                if (deleteButton) {
+                    deleteConfig.id = parseInt(deleteButton.dataset.id);
+                    deleteConfig.store = deleteButton.dataset.store;
+                    deleteConfirmText.textContent = "Tem certeza que deseja apagar esta VISITA GRAVADA? Esta ação não pode ser desfeita.";
+                    showModal(deleteConfirmModal);
+                }
+            });
+
+
+            // --- Chamada Inicial ---
+            initDB();
+            statusDiv.textContent = 'Status: Pronto. Agende uma visita ou preencha os campos para gravar.';
+        });
+    </script>
+</body>
+</html>
