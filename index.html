@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente de Visita com Agendamento</title>
+    <title>Assistente de Visita com IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Fonte Inter para um visual mais moderno */
@@ -25,6 +25,25 @@
         .modal.flex {
             display: flex;
         }
+        /* Estilo para tarefa concluída */
+        .task-completed {
+            text-decoration: line-through;
+            color: #9ca3af; /* text-gray-400 */
+        }
+        .task-text {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        /* Estilo para o botão de Configurações */
+        .settings-button {
+            position: absolute;
+            top: 1.5rem; /* p-6 */
+            right: 1.5rem; /* p-6 */
+        }
+        /* Oculta secções de IA por padrão */
+        .ai-section {
+            display: none;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,12 +51,41 @@
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-5xl w-full mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-5xl w-full mx-auto relative">
         
+        <!-- Botão de Configurações -->
+        <button id="settings-button" class="settings-button text-gray-400 hover:text-indigo-600 transition duration-300" title="Configurações">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.09 2.573-1.066z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+
         <header class="text-center mb-6">
             <h1 class="text-3xl font-bold text-indigo-700">Assistente de Visita</h1>
-            <p class="text-gray-600 mt-2">Agende, grave, transcreva e salve o histórico de visitas a clientes.</p>
+            <p class="text-gray-600 mt-2">Agende, grave, transcreva e gira as suas tarefas e visitas.</p>
         </header>
+
+        <!-- =================================================================
+        SEÇÃO: TAREFAS PENDENTES
+        ================================================================== -->
+        <div class="border-b-2 border-gray-200 pb-6 mb-6">
+            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Tarefas Pendentes</h2>
+            
+            <!-- Input para nova tarefa -->
+            <div class="flex gap-3 mb-4">
+                <input type="text" id="task-input" class="mt-1 block w-full input-field flex-grow" placeholder="Adicionar nova tarefa...">
+                <button id="add-task-button" class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    Adicionar
+                </button>
+            </div>
+
+            <!-- Lista de Tarefas -->
+            <div id="task-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                <p id="tasks-loading" class="text-gray-500">Carregando tarefas...</p>
+                <!-- Tarefas serão inseridas aqui -->
+            </div>
+        </div>
 
         <!-- =================================================================
         SEÇÃO: AGENDAMENTOS
@@ -80,7 +128,7 @@
         </div>
 
         <!-- =================================================================
-        SEÇÃO DE GRAVAÇÃO (MODIFICADA)
+        SEÇÃO DE GRAVAÇÃO
         ================================================================== -->
         <div class="border-b-2 border-gray-200 pb-6 mb-6">
             <h2 class="text-2xl font-bold text-indigo-700 mb-4">Gravação da Visita</h2>
@@ -124,7 +172,6 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                         Parar e Salvar Visita
                     </button>
-                    <!-- NOVO BOTÃO DE SALVAR MANUAL -->
                     <button id="saveManualButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -171,6 +218,60 @@
     MODAIS
     ================================================================== -->
 
+    <!-- Modal de Configurações -->
+    <div id="settings-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="modal-overlay fixed inset-0"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg z-10">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-xl font-bold text-indigo-700">Configurações</h3>
+                <button id="settings-modal-close-button" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <!-- Conteúdo -->
+            <div class="p-6 space-y-4">
+                <!-- Secção Chave de API -->
+                <div>
+                    <label for="gemini-api-key-input" class="block text-sm font-medium text-gray-700 mb-1">Chave de API do Gemini</label>
+                    <input type="password" id="gemini-api-key-input" class="mt-1 block w-full input-field" placeholder="Cole a sua chave de API aqui">
+                    <div class="text-sm text-gray-600 mt-2">
+                        <p>A sua chave de API é necessária para as funcionalidades de IA (resumo, extração de tarefas).</p>
+                        <p class="mt-2">Pode obter uma chave gratuita no <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 hover:underline font-medium">Google AI Studio</a>.</p>
+                        <p class="mt-2 text-xs text-gray-500">A sua chave é guardada apenas no seu dispositivo (localStorage) e nunca é partilhada.</p>
+                    </div>
+                    <div id="api-key-status" class="text-sm font-medium mt-2"></div>
+                </div>
+                
+                <!-- NOVO: Secção de Backup e Restauração -->
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                    <h4 class="text-md font-medium text-gray-800 mb-2">Backup e Restauração</h4>
+                    <p class="text-sm text-gray-600 mb-3">Salve todos os seus dados (tarefas, visitas, áudios, chave de API) num ficheiro, ou restaure a partir de um backup.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="export-data-button" class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Exportar Dados (.json)
+                        </button>
+                        <input type="file" id="import-data-input" class="hidden" accept=".json">
+                        <label for="import-data-input" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0L8 8m4-4v12" /></svg>
+                            Importar Dados (.json)
+                        </label>
+                    </div>
+                    <div id="backup-status" class="text-sm font-medium mt-3"></div>
+                </div>
+
+            </div>
+            <!-- Footer -->
+            <div class="flex justify-end items-center gap-3 p-4 bg-gray-50 border-t rounded-b-2xl">
+                <button id="save-api-key-button" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    Salvar Chave API
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Modal: Ver Detalhes da Visita -->
     <div id="visit-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4">
         <div class="modal-overlay fixed inset-0"></div>
@@ -190,33 +291,64 @@
                 <p class="text-sm text-gray-600">Email: <span id="modal-email" class="font-medium text-gray-900"></span></p>
                 <p class="text-sm text-gray-600">Data: <span id="modal-date-time" class="font-medium text-gray-900"></span></p>
                 
-                <!-- Player de Áudio (AGORA OCULTÁVEL) -->
+                <!-- Player de Áudio (OCULTÁVEL) -->
                 <div id="modal-audio-section">
                     <h4 class="text-md font-medium text-gray-700 mb-2">Áudio da Visita:</h4>
                     <audio id="modalAudioPlayer" controls class="w-full"></audio>
                 </div>
 
                 <div>
-                    <label for="modalTranscriptTextarea" class="block text-sm font-medium text-gray-700 mb-1">Transcrição (Editável):</aabel>
-                    <textarea id="modalTranscriptTextarea" class="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="10"></textarea>
+                    <label for="modalTranscriptTextarea" class="block text-sm font-medium text-gray-700 mb-1">Transcrição (Editável):</label>
+                    <textarea id="modalTranscriptTextarea" class="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="8"></textarea>
                 </div>
                 
                 <div id="modal-status-message" class="text-sm text-green-700 font-medium"></div>
 
+                <!-- Secção de Resumo da IA -->
+                <div id="modal-ai-summary-section" class="ai-section space-y-2">
+                    <label for="ai-summary-result" class="block text-sm font-medium text-gray-700">Resumo da IA:</label>
+                    <textarea id="ai-summary-result" class="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-gray-900" rows="5" readonly></textarea>
+                </div>
+
+                <!-- Secção de Tarefas da IA -->
+                <div id="modal-ai-tasks-section" class="ai-section space-y-2">
+                    <label for="ai-tasks-result" class="block text-sm font-medium text-gray-700">Tarefas Extraídas (IA):</label>
+                    <textarea id="ai-tasks-result" class="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-gray-900" rows="5"></textarea>
+                    <button id="add-ai-tasks-button" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Adicionar à Lista de Tarefas
+                    </button>
+                </div>
+
             </div>
 
             <!-- Footer do Modal (Botões de Ação) -->
-            <div class="flex flex-wrap justify-end items-center gap-3 p-4 bg-gray-50 border-t rounded-b-2xl">
-                <!-- NOVO BOTÃO DE SALVAR EDIÇÕES -->
-                <button id="modal-save-changes-button" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    Salvar Edições
-                </button>
-                <button id="modal-copy-button" class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    Copiar Transcrição
-                </button>
-                <button id="modal-export-button" class="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    Exportar Relatório (TXT)
-                </button>
+            <div class="flex flex-wrap justify-between items-center gap-3 p-4 bg-gray-50 border-t rounded-b-2xl">
+                <!-- Botões da IA (Esquerda) -->
+                <div class="flex gap-3">
+                    <button id="modal-ai-summarize-button" class="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ai-button" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                        Resumir (IA)
+                    </button>
+                    <button id="modal-ai-extract-button" class="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ai-button" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                        Extrair Tarefas (IA)
+                    </button>
+                </div>
+                <!-- Botões Normais (Direita) -->
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button id="modal-save-changes-button" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                        Salvar Edições
+                    </button>
+                    <button id="modal-copy-button" class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                        Copiar
+                    </button>
+                    <button id="modal-export-button" class="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                        Exportar (TXT)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -272,16 +404,41 @@
             let timerInterval;
             let startTime;
 
+            // --- Variáveis da API Gemini ---
+            let userApiKey = null;
+            const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+
             // --- Variáveis do Banco de Dados ---
             let db;
             const DB_NAME = "VisitAssistantDB";
-            const DB_VERSION = 2; 
-            const VISIT_STORE = "visits"; // Visitas concluídas
-            const SCHEDULE_STORE = "scheduledVisits"; // Visitas agendadas
+            const DB_VERSION = 3; 
+            const VISIT_STORE = "visits";
+            const SCHEDULE_STORE = "scheduledVisits";
+            const TASK_STORE = "tasks"; 
             
-            let currentVisitIdToExport = null; // Usado pelo Modal
-            let currentVisitDataToExport = null; // Usado pelo Modal
-            let currentScheduledVisitId = null; // ID do agendamento em progresso
+            let currentVisitIdToExport = null; 
+            let currentVisitDataToExport = null; 
+            let currentScheduledVisitId = null; 
+
+            // --- Elementos da UI (Configurações) ---
+            const settingsButton = document.getElementById('settings-button');
+            const settingsModal = document.getElementById('settings-modal');
+            const settingsModalCloseButton = document.getElementById('settings-modal-close-button');
+            const geminiApiKeyInput = document.getElementById('gemini-api-key-input');
+            const saveApiKeyButton = document.getElementById('save-api-key-button');
+            const apiKeyStatus = document.getElementById('api-key-status');
+            const settingsModalOverlay = settingsModal.querySelector('.modal-overlay');
+
+            // --- Elementos da UI (Backup) ---
+            const exportDataButton = document.getElementById('export-data-button');
+            const importDataInput = document.getElementById('import-data-input');
+            const backupStatus = document.getElementById('backup-status');
+
+            // --- Elementos da UI (Tarefas) ---
+            const taskInput = document.getElementById('task-input');
+            const addTaskButton = document.getElementById('add-task-button');
+            const taskList = document.getElementById('task-list');
+            const tasksLoading = document.getElementById('tasks-loading');
 
             // --- Elementos da UI (Agendamento) ---
             const scheduledClientNameInput = document.getElementById('scheduledClientName');
@@ -295,7 +452,7 @@
             const startButton = document.getElementById('startButton');
             const stopButton = document.getElementById('stopButton');
             const clearButton = document.getElementById('clearButton');
-            const saveManualButton = document.getElementById('saveManualButton'); // <<< NOVO
+            const saveManualButton = document.getElementById('saveManualButton'); 
             const statusDiv = document.getElementById('status');
             const interimTranscriptDiv = document.getElementById('interim-transcript');
             const finalTranscriptDiv = document.getElementById('final-transcript');
@@ -318,13 +475,22 @@
             const modalContactPerson = document.getElementById('modal-contact-person'); 
             const modalEmail = document.getElementById('modal-email'); 
             const modalDateTime = document.getElementById('modal-date-time');
-            const modalAudioSection = document.getElementById('modal-audio-section'); // <<< NOVO
+            const modalAudioSection = document.getElementById('modal-audio-section'); 
             const modalAudioPlayer = document.getElementById('modalAudioPlayer');
             const modalTranscriptTextarea = document.getElementById('modalTranscriptTextarea');
-            const modalSaveChangesButton = document.getElementById('modal-save-changes-button'); // <<< NOVO
+            const modalSaveChangesButton = document.getElementById('modal-save-changes-button'); 
             const modalCopyButton = document.getElementById('modal-copy-button');
             const modalExportButton = document.getElementById('modal-export-button');
-            const modalStatusMessage = document.getElementById('modal-status-message'); // <<< NOVO
+            const modalStatusMessage = document.getElementById('modal-status-message'); 
+            
+            // --- Elementos do Modal de Visita (IA) ---
+            const modalAiSummarizeButton = document.getElementById('modal-ai-summarize-button');
+            const modalAiExtractButton = document.getElementById('modal-ai-extract-button');
+            const modalAiSummarySection = document.getElementById('modal-ai-summary-section');
+            const aiSummaryResult = document.getElementById('ai-summary-result');
+            const modalAiTasksSection = document.getElementById('modal-ai-tasks-section');
+            const aiTasksResult = document.getElementById('ai-tasks-result');
+            const addAiTasksButton = document.getElementById('add-ai-tasks-button');
             
             // --- Elementos do Modal de Apagar ---
             const deleteConfirmModal = document.getElementById('delete-confirm-modal');
@@ -336,6 +502,284 @@
 
             let finalTranscript = '';
             let isRecording = false;
+
+            // =================================================================
+            // FUNÇÕES DE BACKUP / RESTAURAÇÃO (NOVO)
+            // =================================================================
+
+            // Converte um Blob de áudio para um texto base64
+            function blobToBase64(blob) {
+                return new Promise((resolve, reject) => {
+                    if (!blob) resolve(null);
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = () => resolve(reader.result); // Formato: "data:audio/webm;base64,..."
+                    reader.onerror = error => reject(error);
+                });
+            }
+
+            // Converte texto base64 de volta para um Blob de áudio
+            function base64ToBlob(base64Data) {
+                if (!base64Data) return null;
+                try {
+                    const parts = base64Data.split(';base64,');
+                    const contentType = parts[0].split(':')[1];
+                    const byteCharacters = atob(parts[1]);
+                    const byteArrays = [];
+                    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                        const slice = byteCharacters.slice(offset, offset + 512);
+                        const byteNumbers = new Array(slice.length);
+                        for (let i = 0; i < slice.length; i++) {
+                            byteNumbers[i] = slice.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        byteArrays.push(byteArray);
+                    }
+                    return new Blob(byteArrays, { type: contentType });
+                } catch (error) {
+                    console.error("Erro ao converter base64 para Blob:", error);
+                    return null;
+                }
+            }
+
+            // Helper para transformar requests do IndexedDB em Promises (para async/await)
+            function promisifyDbRequest(request) {
+                return new Promise((resolve, reject) => {
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = (event) => reject(event.target.error);
+                });
+            }
+
+            // Função para EXPORTAR todos os dados
+            async function exportData() {
+                if (!db) {
+                    backupStatus.textContent = 'Erro: Base de dados não está pronta.'; 
+                    backupStatus.className = 'text-sm font-medium mt-3 text-red-700';
+                    return;
+                }
+                backupStatus.textContent = 'A preparar dados para exportação... Por favor, aguarde.';
+                backupStatus.className = 'text-sm font-medium mt-3 text-blue-700';
+                
+                try {
+                    const transaction = db.transaction([TASK_STORE, SCHEDULE_STORE, VISIT_STORE], 'readonly');
+                    const taskStore = transaction.objectStore(TASK_STORE);
+                    const scheduleStore = transaction.objectStore(SCHEDULE_STORE);
+                    const visitStore = transaction.objectStore(VISIT_STORE);
+
+                    // 1. Obter todos os dados
+                    const tasks = await promisifyDbRequest(taskStore.getAll());
+                    const scheduledVisits = await promisifyDbRequest(scheduleStore.getAll());
+                    const visitsRaw = await promisifyDbRequest(visitStore.getAll());
+
+                    // 2. Converter áudios (Blobs) para base64
+                    const visits = [];
+                    for (const visit of visitsRaw) {
+                        if (visit.audioBlob) {
+                            visit.audioBase64 = await blobToBase64(visit.audioBlob);
+                            delete visit.audioBlob; // Não exportar o blob diretamente
+                        }
+                        visits.push(visit);
+                    }
+
+                    // 3. Obter a chave de API
+                    const settings = {
+                        geminiApiKey: localStorage.getItem('geminiApiKey') || null
+                    };
+
+                    // 4. Criar o objeto de backup
+                    const backupData = { tasks, scheduledVisits, visits, settings, backupVersion: DB_VERSION };
+                    
+                    // 5. Criar e descarregar o ficheiro JSON
+                    const jsonString = JSON.stringify(backupData, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `assistente_visita_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    backupStatus.textContent = 'Backup exportado com sucesso!';
+                    backupStatus.className = 'text-sm font-medium mt-3 text-green-700';
+
+                } catch (error) {
+                    console.error('Erro ao exportar dados:', error);
+                    backupStatus.textContent = 'Erro ao exportar dados. Verifique a consola.';
+                    backupStatus.className = 'text-sm font-medium mt-3 text-red-700';
+                }
+            }
+
+            // Função para IMPORTAR todos os dados
+            function importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.readAsText(file);
+                backupStatus.textContent = 'A ler o ficheiro de backup...';
+                backupStatus.className = 'text-sm font-medium mt-3 text-blue-700';
+
+                reader.onload = async (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (!importedData.tasks || !importedData.scheduledVisits || !importedData.visits || !importedData.settings) {
+                            throw new Error('Formato de backup inválido.');
+                        }
+                        
+                        backupStatus.textContent = 'A limpar dados antigos...';
+                        
+                        // 1. Limpar dados existentes
+                        const clearTransaction = db.transaction([TASK_STORE, SCHEDULE_STORE, VISIT_STORE], 'readwrite');
+                        await promisifyDbRequest(clearTransaction.objectStore(TASK_STORE).clear());
+                        await promisifyDbRequest(clearTransaction.objectStore(SCHEDULE_STORE).clear());
+                        await promisifyDbRequest(clearTransaction.objectStore(VISIT_STORE).clear());
+                        
+                        // Esperar a transação de limpeza terminar
+                        await new Promise((resolve, reject) => {
+                             clearTransaction.oncomplete = resolve;
+                             clearTransaction.onerror = reject;
+                        });
+                        
+                        backupStatus.textContent = 'A importar novos dados... Por favor, aguarde.';
+
+                        // 2. Importar configurações
+                        if (importedData.settings.geminiApiKey) {
+                            localStorage.setItem('geminiApiKey', importedData.settings.geminiApiKey);
+                        } else {
+                            localStorage.removeItem('geminiApiKey');
+                        }
+
+                        // 3. Importar dados para o DB
+                        const importTransaction = db.transaction([TASK_STORE, SCHEDULE_STORE, VISIT_STORE], 'readwrite');
+                        const taskStore = importTransaction.objectStore(TASK_STORE);
+                        const scheduleStore = importTransaction.objectStore(SCHEDULE_STORE);
+                        const visitStore = importTransaction.objectStore(VISIT_STORE);
+
+                        importedData.tasks.forEach(task => taskStore.add(task));
+                        importedData.scheduledVisits.forEach(schedule => scheduleStore.add(schedule));
+                        
+                        importedData.visits.forEach(visit => {
+                            if (visit.audioBase64) {
+                                visit.audioBlob = base64ToBlob(visit.audioBase64);
+                                delete visit.audioBase64;
+                            }
+                            visitStore.add(visit);
+                        });
+
+                        importTransaction.oncomplete = () => {
+                            backupStatus.textContent = 'Importação concluída com sucesso! A recarregar dados.';
+                            backupStatus.className = 'text-sm font-medium mt-3 text-green-700';
+                            
+                            // 4. Recarregar UI
+                            loadApiKey();
+                            loadTasks();
+                            loadScheduledVisits();
+                            loadHistory();
+                            alert('Importação concluída! Os seus dados foram restaurados.');
+                            hideModal(settingsModal);
+                        };
+                        
+                        importTransaction.onerror = (event) => {
+                            throw new Error('Erro ao adicionar dados ao DB: ' + event.target.error);
+                        };
+
+                    } catch (error) {
+                        console.error('Erro ao importar dados:', error);
+                        backupStatus.textContent = `Erro na importação: ${error.message}`;
+                        backupStatus.className = 'text-sm font-medium mt-3 text-red-700';
+                        alert(`Erro na importação: ${error.message}`);
+                    } finally {
+                        // Limpa o input de ficheiro para permitir importar o mesmo ficheiro novamente
+                        event.target.value = null;
+                    }
+                };
+                
+                reader.onerror = () => {
+                    backupStatus.textContent = 'Erro ao ler o ficheiro.';
+                    backupStatus.className = 'text-sm font-medium mt-3 text-red-700';
+                    alert('Erro ao ler o ficheiro.');
+                };
+            }
+
+
+            // =================================================================
+            // FUNÇÕES DA API DO GEMINI
+            // =================================================================
+
+            function loadApiKey() {
+                const storedKey = localStorage.getItem('geminiApiKey');
+                if (storedKey) {
+                    userApiKey = storedKey;
+                    geminiApiKeyInput.value = storedKey;
+                    apiKeyStatus.textContent = 'Chave de API carregada do seu dispositivo.';
+                    apiKeyStatus.className = 'text-sm text-green-700';
+                } else {
+                    apiKeyStatus.textContent = 'Nenhuma Chave de API encontrada. Funcionalidades de IA desativadas.';
+                    apiKeyStatus.className = 'text-sm text-red-700';
+                }
+            }
+
+            async function callGeminiApi(promptText, buttonElement) {
+                if (!userApiKey) {
+                    modalStatusMessage.textContent = 'Erro: Chave de API do Gemini não configurada.';
+                    return null;
+                }
+
+                const originalButtonText = buttonElement.innerHTML;
+                buttonElement.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> A processar...`;
+                buttonElement.disabled = true;
+
+                const payload = {
+                    "contents": [{
+                        "parts": [{ "text": promptText }]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.5,
+                        "topK": 1,
+                        "topP": 1,
+                        "maxOutputTokens": 2048,
+                    },
+                    "safetySettings": [
+                        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}
+                    ]
+                };
+
+                try {
+                    const response = await fetch(GEMINI_API_URL + userApiKey, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error.message || `Erro HTTP: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content.parts[0].text) {
+                        throw new Error("Resposta da IA inválida ou vazia.");
+                    }
+
+                    return result.candidates[0].content.parts[0].text;
+
+                } catch (error) {
+                    console.error("Erro ao chamar API do Gemini:", error);
+                    modalStatusMessage.textContent = `Erro na IA: ${error.message}`;
+                    return null;
+                } finally {
+                    buttonElement.innerHTML = originalButtonText;
+                    buttonElement.disabled = false;
+                }
+            }
+
 
             // =================================================================
             // FUNÇÕES DO BANCO DE DADOS (IndexedDB)
@@ -354,20 +798,117 @@
                     console.log("Banco de dados aberto com sucesso.");
                     loadHistory();
                     loadScheduledVisits(); 
+                    loadTasks(); 
+                    loadApiKey();
                 };
 
                 request.onupgradeneeded = (event) => {
                     let db = event.target.result;
-                    if (!db.objectStoreNames.contains(VISIT_STORE)) {
-                        db.createObjectStore(VISIT_STORE, { keyPath: 'id', autoIncrement: true });
-                        console.log(`Object store '${VISIT_STORE}' criado.`);
+                    if (event.oldVersion < 1) {
+                         db.createObjectStore(VISIT_STORE, { keyPath: 'id', autoIncrement: true });
                     }
-                    if (!db.objectStoreNames.contains(SCHEDULE_STORE)) {
-                        db.createObjectStore(SCHEDULE_STORE, { keyPath: 'id', autoIncrement: true });
-                        console.log(`Object store '${SCHEDULE_STORE}' criado.`);
+                    if (event.oldVersion < 2) {
+                        if (!db.objectStoreNames.contains(SCHEDULE_STORE)) {
+                            db.createObjectStore(SCHEDULE_STORE, { keyPath: 'id', autoIncrement: true });
+                        }
+                    }
+                    if (event.oldVersion < 3) {
+                        if (!db.objectStoreNames.contains(TASK_STORE)) {
+                            db.createObjectStore(TASK_STORE, { keyPath: 'id', autoIncrement: true });
+                        }
                     }
                 };
             }
+
+            // --- Funções de TAREFAS (Tasks) ---
+
+            function saveTask(taskText) {
+                if (!db) return;
+                const transaction = db.transaction([TASK_STORE], 'readwrite');
+                const store = transaction.objectStore(TASK_STORE);
+                const taskData = { text: taskText, completed: false };
+                const request = store.add(taskData);
+
+                request.onsuccess = () => {
+                    console.log("Tarefa salva com sucesso!");
+                    loadTasks(); // Recarrega a lista
+                };
+                request.onerror = (event) => {
+                    console.error("Erro ao salvar tarefa:", event.target.error);
+                };
+            }
+
+            function loadTasks() {
+                if (!db) return;
+                const transaction = db.transaction([TASK_STORE], 'readonly');
+                const store = transaction.objectStore(TASK_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const tasks = event.target.result;
+                    taskList.innerHTML = ''; // Limpa a lista
+                    if (tasks.length === 0) {
+                        tasksLoading.textContent = 'Nenhuma tarefa pendente.';
+                        taskList.appendChild(tasksLoading);
+                    } else {
+                        // Ordena: incompletas primeiro, depois completas
+                        tasks.sort((a, b) => a.completed - b.completed);
+                        tasks.forEach(task => {
+                            const item = document.createElement('div');
+                            item.className = 'flex justify-between items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm';
+                            
+                            item.innerHTML = `
+                                <span class="task-text ${task.completed ? 'task-completed' : ''}" data-id="${task.id}" data-completed="${task.completed}">
+                                    ${task.text}
+                                </span>
+                                <button data-id="${task.id}" class="task-delete-btn text-red-400 hover:text-red-600 ml-3 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            `;
+                            taskList.appendChild(item);
+                        });
+                    }
+                };
+                request.onerror = (event) => {
+                    console.error("Erro ao carregar tarefas:", event.target.error);
+                    tasksLoading.textContent = 'Erro ao carregar tarefas.';
+                };
+            }
+
+            function updateTaskStatus(id, currentStatus) {
+                if (!db) return;
+                const newStatus = !currentStatus; // Inverte o status
+                const transaction = db.transaction([TASK_STORE], 'readwrite');
+                const store = transaction.objectStore(TASK_STORE);
+                const request = store.get(id);
+
+                request.onsuccess = (event) => {
+                    const data = event.target.result;
+                    if (data) {
+                        data.completed = newStatus;
+                        const updateRequest = store.put(data);
+                        updateRequest.onsuccess = () => {
+                            console.log(`Status da tarefa ${id} atualizado.`);
+                            loadTasks(); // Recarrega a lista
+                        };
+                    }
+                };
+            }
+
+            function deleteTask(id) {
+                if (!db) return;
+                const transaction = db.transaction([TASK_STORE], 'readwrite');
+                const store = transaction.objectStore(TASK_STORE);
+                const request = store.delete(id);
+
+                request.onsuccess = () => {
+                    console.log(`Tarefa ${id} apagada.`);
+                    loadTasks(); // Recarrega a lista
+                };
+            }
+
 
             // --- Funções de Visitas CONCLUÍDAS (History) ---
 
@@ -446,7 +987,6 @@
                 request.onerror = (event) => console.error("Erro ao buscar visita:", event.target.error);
             }
 
-            // <<< NOVA FUNÇÃO PARA SALVAR EDIÇÕES DO MODAL >>>
             function updateVisitTranscript(id, newTranscript) {
                 if (!db) return;
                 const transaction = db.transaction([VISIT_STORE], 'readwrite');
@@ -715,7 +1255,7 @@
                     
                     startButton.disabled = true;
                     stopButton.disabled = false;
-                    saveManualButton.disabled = true; // <<< DESABILITA SALVAR MANUAL
+                    saveManualButton.disabled = true; 
                     languageSelect.disabled = true; 
                     clientNameInput.disabled = true;
                     contactPersonInput.disabled = true;
@@ -740,7 +1280,7 @@
                 
                 startButton.disabled = false;
                 stopButton.disabled = true;
-                saveManualButton.disabled = false; // <<< HABILITA SALVAR MANUAL
+                saveManualButton.disabled = false; 
                 languageSelect.disabled = false;
                 clientNameInput.disabled = false;
                 contactPersonInput.disabled = false;
@@ -751,7 +1291,6 @@
                 statusDiv.textContent = 'Status: Gravação parada. Salvando visita no banco de dados...';
             };
 
-            // <<< NOVA FUNÇÃO PARA SALVAR VISITA MANUAL >>>
             const saveManualVisit = () => {
                 const clientName = clientNameInput.value.trim();
                 if (!clientName) {
@@ -775,10 +1314,10 @@
                     email: emailInput.value.trim(), 
                     dateTime: new Date().toISOString(),
                     transcript: finalTranscriptText,
-                    audioBlob: null // <<< SEM ÁUDIO
+                    audioBlob: null 
                 };
                 
-                saveCompletedVisit(visitData); // Reutiliza a mesma função de salvar
+                saveCompletedVisit(visitData); 
             };
 
             // --- Função de Limpeza ---
@@ -807,6 +1346,35 @@
                 setTimeout(() => modalElement.classList.remove('flex'), 300);
             }
 
+            // --- Modal de Configurações ---
+            settingsButton.addEventListener('click', () => {
+                backupStatus.textContent = ''; // Limpa status de backup
+                showModal(settingsModal)
+            });
+            settingsModalCloseButton.addEventListener('click', () => hideModal(settingsModal));
+            settingsModalOverlay.addEventListener('click', () => hideModal(settingsModal));
+            
+            saveApiKeyButton.addEventListener('click', () => {
+                const newKey = geminiApiKeyInput.value.trim();
+                if (newKey) {
+                    localStorage.setItem('geminiApiKey', newKey);
+                    userApiKey = newKey;
+                    apiKeyStatus.textContent = 'Chave de API salva com sucesso!';
+                    apiKeyStatus.className = 'text-sm text-green-700';
+                    setTimeout(() => hideModal(settingsModal), 1000);
+                } else {
+                    localStorage.removeItem('geminiApiKey');
+                    userApiKey = null;
+                    apiKeyStatus.textContent = 'Chave removida. Funcionalidades de IA desativadas.';
+                    apiKeyStatus.className = 'text-sm text-red-700';
+                }
+            });
+
+            // --- Eventos de Backup ---
+            exportDataButton.addEventListener('click', exportData);
+            importDataInput.addEventListener('change', importData);
+
+
             // --- Modal de Visita ---
             modalCloseButton.addEventListener('click', () => hideModal(visitModal));
             modalOverlay.addEventListener('click', () => hideModal(visitModal));
@@ -821,9 +1389,8 @@
                 } catch (err) { console.error('Falha ao copiar: ', err); }
             });
 
-            // <<< NOVO EVENTO PARA SALVAR EDIÇÕES DO MODAL >>>
             modalSaveChangesButton.addEventListener('click', () => {
-                if (currentVisitIdToExport) { // Reutiliza o ID que já está carregado no modal
+                if (currentVisitIdToExport) { 
                     const newTranscript = modalTranscriptTextarea.value;
                     updateVisitTranscript(currentVisitIdToExport, newTranscript);
                 }
@@ -833,10 +1400,13 @@
                 if (!currentVisitDataToExport) return;
                 
                 const visit = currentVisitDataToExport;
+                // Pega o texto editado E o resumo da IA
                 const transcriptText = modalTranscriptTextarea.value.trim(); 
+                const aiSummary = aiSummaryResult.value.trim();
+                const aiTasks = aiTasksResult.value.trim();
                 const visitDate = new Date(visit.dateTime);
                 
-                const exportContent = `
+                let exportContent = `
 =============================================
 RELATÓRIO DE VISITA
 =============================================
@@ -845,8 +1415,32 @@ Pessoa de Contato: ${visit.contactPerson || 'N/A'}
 Email: ${visit.email || 'N/A'}
 Data/Hora: ${visitDate.toLocaleString('pt-BR')}
 =============================================
+`;
+                if (aiSummary) {
+                    exportContent += `
 
-# TRANSCRIÇÃO DA VISITA
+# RESUMO (GERADO POR IA)
+---------------------------------------------
+${aiSummary}
+
+=============================================
+`;
+                }
+
+                 if (aiTasks) {
+                    exportContent += `
+
+# TAREFAS (EXTRAÍDAS POR IA)
+---------------------------------------------
+${aiTasks}
+
+=============================================
+`;
+                }
+
+                exportContent += `
+
+# TRANSCRIÇÃO COMPLETA
 ---------------------------------------------
 ${transcriptText || 'Nenhuma transcrição salva.'}
 `;
@@ -867,6 +1461,73 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
                 modalStatusMessage.textContent = `Relatório ${filename} exportado!`;
                 setTimeout(() => { modalStatusMessage.textContent = ''; }, 3000);
             });
+
+            // --- Modal de Visita (Eventos de IA) ---
+
+            modalAiSummarizeButton.addEventListener('click', async function() {
+                const transcript = modalTranscriptTextarea.value;
+                if (!transcript) {
+                    modalStatusMessage.textContent = 'Não há transcrição para resumir.';
+                    return;
+                }
+
+                const prompt = `Você é um assistente de negócios sénior. Resuma a seguinte transcrição de reunião em pontos-chave (bullet points). Foque-se em decisões tomadas e nos próximos passos. O resumo deve ser conciso e profissional.
+                
+                Transcrição:
+                "${transcript}"`;
+                
+                const summary = await callGeminiApi(prompt, this);
+                if (summary) {
+                    modalAiSummarySection.style.display = 'block';
+                    aiSummaryResult.value = summary;
+                    modalStatusMessage.textContent = 'Resumo gerado com sucesso!';
+                }
+            });
+
+            modalAiExtractButton.addEventListener('click', async function() {
+                const transcript = modalTranscriptTextarea.value;
+                if (!transcript) {
+                    modalStatusMessage.textContent = 'Não há transcrição para analisar.';
+                    return;
+                }
+
+                const prompt = `Analise a seguinte transcrição e extraia todas as tarefas ou ações pendentes. Responda APENAS com a lista de tarefas, um item por linha. Se não houver tarefas claras, responda 'Nenhuma tarefa encontrada.'.
+                
+                Exemplo:
+                - Enviar o email para o Sr. João
+                - Marcar a próxima reunião
+                
+                Transcrição:
+                "${transcript}"`;
+                
+                const tasks = await callGeminiApi(prompt, this);
+                if (tasks) {
+                    modalAiTasksSection.style.display = 'block';
+                    aiTasksResult.value = tasks;
+                    modalStatusMessage.textContent = 'Tarefas extraídas com sucesso!';
+                }
+            });
+
+            addAiTasksButton.addEventListener('click', () => {
+                const tasksText = aiTasksResult.value;
+                if (!tasksText) return;
+
+                const tasks = tasksText.split('\n')
+                    .map(t => t.trim().replace(/^- /g, '')) // Limpa e remove hífens
+                    .filter(t => t.length > 0 && t.toLowerCase() !== 'nenhuma tarefa encontrada.'); // Filtra linhas vazias
+                
+                if (tasks.length === 0) {
+                    modalStatusMessage.textContent = 'Nenhuma tarefa válida para adicionar.';
+                    return;
+                }
+
+                tasks.forEach(task => saveTask(task));
+                
+                modalStatusMessage.textContent = `${tasks.length} tarefa(s) adicionada(s) à lista principal!`;
+                aiTasksResult.value = ''; // Limpa após adicionar
+                setTimeout(() => { modalAiTasksSection.style.display = 'none'; }, 2000);
+            });
+
 
             // --- Modal de Apagar ---
             deleteConfirmCancel.addEventListener('click', () => {
@@ -889,6 +1550,40 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
             // =================================================================
             // EVENT LISTENERS GLOBAIS
             // =================================================================
+
+             // --- Event Listeners de TAREFAS ---
+            addTaskButton.addEventListener('click', () => {
+                const text = taskInput.value.trim();
+                if (text) {
+                    saveTask(text);
+                    taskInput.value = '';
+                }
+            });
+            
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTaskButton.click();
+                }
+            });
+
+            taskList.addEventListener('click', (event) => {
+                const target = event.target;
+
+                // Clicou no texto da tarefa para completar/descompletar
+                const taskText = target.closest('.task-text');
+                if (taskText) {
+                    const id = parseInt(taskText.dataset.id);
+                    const completed = taskText.dataset.completed === 'true';
+                    updateTaskStatus(id, completed);
+                }
+
+                // Clicou no botão de apagar
+                const deleteButton = target.closest('.task-delete-btn');
+                if (deleteButton) {
+                    const id = parseInt(deleteButton.dataset.id);
+                    deleteTask(id);
+                }
+            });
 
             // --- Botão Salvar Agendamento ---
             saveScheduleButton.addEventListener('click', () => {
@@ -946,7 +1641,7 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
             // --- Botões da Gravação ---
             startButton.addEventListener('click', startRecording);
             stopButton.addEventListener('click', stopAndSaveVisit);
-            saveManualButton.addEventListener('click', saveManualVisit); // <<< NOVO EVENTO
+            saveManualButton.addEventListener('click', saveManualVisit); 
             
             clearButton.addEventListener('click', () => {
                 if (isRecording) stopAndSaveVisit(); 
@@ -967,7 +1662,19 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
                         if (visit) {
                             currentVisitIdToExport = visit.id; 
                             currentVisitDataToExport = visit; 
-                            modalStatusMessage.textContent = ''; // Limpa status anterior
+                            modalStatusMessage.textContent = ''; 
+
+                            // Limpa e esconde secções de IA
+                            modalAiSummarySection.style.display = 'none';
+                            aiSummaryResult.value = '';
+                            modalAiTasksSection.style.display = 'none';
+                            aiTasksResult.value = '';
+                            
+                            // Mostra botões de IA se a chave existir
+                            const aiButtons = visitModal.querySelectorAll('.ai-button');
+                            aiButtons.forEach(btn => {
+                                btn.style.display = userApiKey ? 'flex' : 'none';
+                            });
                             
                             modalTitle.textContent = `Detalhes: ${visit.clientName}`;
                             modalClientName.textContent = visit.clientName;
@@ -976,7 +1683,6 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
                             modalDateTime.textContent = new Date(visit.dateTime).toLocaleString('pt-BR');
                             modalTranscriptTextarea.value = visit.transcript;
                             
-                            // <<< LÓGICA PARA ESCONDER/MOSTRAR PLAYER >>>
                             if (visit.audioBlob) {
                                 const audioUrl = URL.createObjectURL(visit.audioBlob);
                                 modalAudioPlayer.src = audioUrl;
