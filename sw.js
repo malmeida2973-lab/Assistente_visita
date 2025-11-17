@@ -1,15 +1,13 @@
-// PWA Service Worker (v9)
+// PWA Service Worker (v10)
 // Isto torna a app "instalável" e permite o funcionamento offline.
 
-const CACHE_NAME = 'assistente-visita-cache-v9';
+const CACHE_NAME = 'assistente-visita-cache-v10';
 // A 'URLS_TO_CACHE' deve incluir o caminho exato para o ficheiro no GitHub Pages
-// Se o seu repositório se chama 'assistente-de-visita', o caminho é '/assistente-de-visita/'
-// Se mudou o nome do repositório, tem de mudar aqui.
-// Por agora, vamos usar caminhos relativos que funcionam na maioria dos casos.
 const URLS_TO_CACHE = [
   '.',
   'index.html',
-  'manifest.json'
+  'manifest.json',
+  'https://cdn.tailwindcss.com' // (v10) Adiciona o Tailwind ao cache
 ];
 
 // 1. Instalação do Service Worker (Cache dos ficheiros principais)
@@ -19,11 +17,8 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Service Worker: Cache aberto, a adicionar ficheiros principais.');
-        // O addAll falhará se um dos ficheiros não for encontrado.
-        // É melhor usar add() separadamente para 'index.html' e '.' se houver problemas.
         return cache.addAll(URLS_TO_CACHE).catch(err => {
             console.warn('SW: Falha ao adicionar todos os ficheiros iniciais ao cache. Tentando URLs individuais.', err);
-            // Tenta adicionar individualmente
             return Promise.all(
                 URLS_TO_CACHE.map(url => cache.add(url).catch(e => console.warn(`SW: Falha ao carregar ${url}`, e)))
             );
@@ -52,12 +47,9 @@ self.addEventListener('activate', event => {
 });
 
 // 3. Fetch (Estratégia "Stale-While-Revalidate")
-// Isto é melhor para uma app que se atualiza.
-// Tenta ir à rede primeiro, mas se falhar (offline), usa o cache.
-// Ao mesmo tempo, atualiza o cache em segundo plano.
 self.addEventListener('fetch', event => {
-  // Ignora chamadas para a API do Gemini ou fontes externas como tailwind
-  if (event.request.url.startsWith('http') && !event.request.url.includes('generativelanguage') && !event.request.url.includes('cdn.tailwindcss.com') && !event.request.url.includes('placehold.co')) {
+  // Ignora chamadas para a API do Gemini ou fontes externas
+  if (event.request.url.startsWith('http') && !event.request.url.includes('generativelanguage') && !event.request.url.includes('placehold.co')) {
     
     event.respondWith(
       caches.open(CACHE_NAME).then(cache => {
