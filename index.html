@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente de Visita Radial</title>
+    <title>Assistente de Visita com IA</title>
+    
+    <!-- PWA: Link para o Manifest (v9) -->
+    <link rel="manifest" href="manifest.json">
+    <!-- PWA: Cor do tema para o browser (v9) -->
+    <meta name="theme-color" content="#4f46e5">
+    <!-- PWA: Ícone para Apple (v9) -->
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=AV">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Fonte Inter para um visual mais moderno */
@@ -34,8 +42,6 @@
             cursor: pointer;
             flex-grow: 1;
         }
-        /* Estilo para o botão de Configurações - REMOVIDO */
-        
         /* Oculta secções de IA por padrão */
         .ai-section {
             display: none;
@@ -48,6 +54,20 @@
         .label-disabled {
             @apply opacity-50 cursor-not-allowed;
         }
+        /* PWA: Overlay de Privacidade (v9) */
+        #privacy-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 40; /* Abaixo dos modais (z-50) */
+            display: none; /* Começa escondido */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,9 +77,7 @@
 
     <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-5xl w-full mx-auto relative">
         
-        <!-- =================================================================
-        HEADER CORRIGIDO (v7)
-        ================================================================== -->
+        <!-- Cabeçalho (Corrigido v9) -->
         <header class="flex justify-between items-start mb-6">
             <div class="flex-1"></div> <!-- Espaçador invisível à esquerda -->
             
@@ -68,8 +86,13 @@
                 <p class="text-gray-600 mt-2">Agende, grave, transcreva e gira as suas tarefas e visitas.</p>
             </div>
             
-            <div class="flex-1 text-right"> <!-- Container para o botão -->
-                <button id="settings-button" class="text-gray-400 hover:text-indigo-600 transition duration-300" title="Configurações">
+            <div class="flex-1 text-right space-x-2"> <!-- Container para os botões -->
+                <button id="privacy-button" class="inline-block text-gray-400 hover:text-indigo-600 transition duration-300" title="Modo Privacidade">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" />
+                    </svg>
+                </button>
+                <button id="settings-button" class="inline-block text-gray-400 hover:text-indigo-600 transition duration-300" title="Configurações">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.09 2.573-1.066z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -78,6 +101,7 @@
             </div>
         </header>
 
+        <!-- ... (Resto do HTML das Tarefas, Agendamentos, Gravação, Histórico) ... -->
         <!-- =================================================================
         SEÇÃO: TAREFAS PENDENTES
         ================================================================== -->
@@ -227,6 +251,16 @@
     </div>
 
     <!-- =================================================================
+    MODAL DE PRIVACIDADE (v9)
+    ================================================================== -->
+    <div id="privacy-overlay">
+        <div>
+            <p>Modo de Privacidade Ativado</p>
+            <p class="text-sm text-gray-300 mt-2">(Clique 2x para mostrar)</p>
+        </div>
+    </div>
+
+    <!-- =================================================================
     MODAIS
     ================================================================== -->
 
@@ -255,7 +289,7 @@
                     <div id="api-key-status" class="text-sm font-medium mt-2"></div>
                 </div>
                 
-                <!-- Secção de Backup e Restauração (CORRIGIDA v7) -->
+                <!-- Secção de Backup e Restauração (Corrigida v7) -->
                 <div class="border-t border-gray-200 pt-4 mt-4">
                     <h4 class="text-md font-medium text-gray-800 mb-2">Backup e Restauração</h4>
                     <p class="text-sm text-gray-600 mb-3">Salve todos os seus dados (tarefas, visitas, áudios, chave de API) num ficheiro, ou restaure a partir de um backup.</p>
@@ -416,6 +450,9 @@
             let timerInterval;
             let startTime;
 
+            // --- Variável do Wake Lock (v8) ---
+            let wakeLock = null;
+
             // --- Variáveis da API Gemini ---
             let userApiKey = null;
             const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
@@ -440,6 +477,11 @@
             const saveApiKeyButton = document.getElementById('save-api-key-button');
             const apiKeyStatus = document.getElementById('api-key-status');
             const settingsModalOverlay = settingsModal.querySelector('.modal-overlay');
+            
+            // --- Elementos da UI (Privacidade v9) ---
+            const privacyButton = document.getElementById('privacy-button');
+            const privacyOverlay = document.getElementById('privacy-overlay');
+
 
             // --- Elementos da UI (Backup) ---
             const exportDataButton = document.getElementById('export-data-button');
@@ -1170,6 +1212,38 @@
             // FUNÇÕES DE GRAVAÇÃO E TRANSCRIÇÃO
             // =================================================================
 
+            // --- Funções do Wake Lock (v8) ---
+            const requestWakeLock = async () => {
+                if ('wakeLock' in navigator) {
+                    try {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        wakeLock.addEventListener('release', () => {
+                            console.log('Bloqueio de ecrã libertado (ex: mudou de aba)');
+                        });
+                        console.log('Bloqueio de ecrã ativo!');
+                        statusDiv.textContent = `Status: Ouvindo... Bloqueio de ecrã ativo.`;
+                    } catch (err) {
+                        console.error(`${err.name}, ${err.message}`);
+                        statusDiv.textContent = `Status: Ouvindo... (Falha ao bloquear ecrã: ${err.message})`;
+                    }
+                } else {
+                    console.warn('API WakeLock não suportada.');
+                    statusDiv.textContent = 'Status: Ouvindo... (WakeLock não suportado)';
+                }
+            };
+
+            const releaseWakeLock = async () => {
+                if (wakeLock) {
+                    try {
+                        await wakeLock.release();
+                        wakeLock = null;
+                        console.log('Bloqueio de ecrã libertado.');
+                    } catch (err) {
+                        console.error(`Falha ao libertar wakeLock: ${err.name}, ${err.message}`);
+                    }
+                }
+            };
+
             // --- Funções do Temporizador ---
             const formatTime = (totalSeconds) => {
                 const hours = Math.floor(totalSeconds / 3600);
@@ -1205,7 +1279,8 @@
 
             // --- Funções da API de Transcrição ---
             recognition.onstart = () => {
-                statusDiv.textContent = `Status: Ouvindo e Gravando... Fale em ${languageSelect.options[languageSelect.selectedIndex].text}.`;
+                // (v8) O status é definido pelo requestWakeLock agora
+                // statusDiv.textContent = `Status: Ouvindo e Gravando...`;
             };
 
             recognition.onend = () => {
@@ -1264,6 +1339,9 @@
                     audioChunks = [];
                     startTimer(); 
                     
+                    // (v8) Solicita o Wake Lock
+                    await requestWakeLock();
+
                     mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
                     mediaRecorder.ondataavailable = (event) => { audioChunks.push(event.data); };
 
@@ -1303,17 +1381,22 @@
                 } catch (err) {
                     console.error('Erro ao iniciar gravação:', err);
                     statusDiv.textContent = (err.name === "NotAllowedError") ? 'Erro: Permissão do microfone negada.' : 'Erro: Não foi possível iniciar o microfone.';
-                    isRecording = false; stopTimer();
+                    isRecording = false; 
+                    stopTimer();
+                    await releaseWakeLock(); // (v8) Liberta o lock se falhar
                 }
             };
 
-            const stopAndSaveVisit = () => {
+            const stopAndSaveVisit = async () => {
                 if (!isRecording) return;
                 isRecording = false;
                 stopTimer();
                 if (recognition) recognition.stop();
                 if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
                 
+                // (v8) Liberta o Wake Lock
+                await releaseWakeLock();
+
                 startButton.disabled = false;
                 stopButton.disabled = true;
                 saveManualButton.disabled = false; 
@@ -1357,7 +1440,11 @@
             };
 
             // --- Função de Limpeza ---
-            function clearCurrentRecording() {
+            const clearCurrentRecording = async () => {
+                if (isRecording) {
+                    await stopAndSaveVisit(); // Para e salva se estiver gravando
+                }
+                
                 finalTranscript = '';
                 finalTranscriptDiv.value = '';
                 interimTranscriptDiv.textContent = '';
@@ -1406,6 +1493,15 @@
                     apiKeyStatus.className = 'text-sm text-red-700';
                 }
             });
+            
+            // --- Modal de Privacidade (v9) ---
+            privacyButton.addEventListener('click', () => {
+                privacyOverlay.style.display = 'flex';
+            });
+            privacyOverlay.addEventListener('dblclick', () => {
+                 privacyOverlay.style.display = 'none';
+            });
+
 
             // --- Eventos de Backup ---
             exportDataButton.addEventListener('click', exportData);
@@ -1680,8 +1776,11 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
             stopButton.addEventListener('click', stopAndSaveVisit);
             saveManualButton.addEventListener('click', saveManualVisit); 
             
-            clearButton.addEventListener('click', () => {
-                if (isRecording) stopAndSaveVisit(); 
+            clearButton.addEventListener('click', async () => {
+                // (v8) Modificado para ser async para o releaseWakeLock
+                if (isRecording) {
+                    await stopAndSaveVisit(); // Para, salva e liberta o lock
+                }
                 clearCurrentRecording(); 
                 timerDisplay.textContent = '00:00:00';
                 statusDiv.textContent = 'Status: Campos de gravação limpos. Pronto para começar.';
@@ -1742,6 +1841,29 @@ ${transcriptText || 'Nenhuma transcrição salva.'}
                     showModal(deleteConfirmModal);
                 }
             });
+            
+            // --- (v8) Listener de Visibilidade para o Wake Lock ---
+            document.addEventListener('visibilitychange', async () => {
+                if (wakeLock && document.visibilityState === 'visible' && isRecording) {
+                    // O ecrã foi bloqueado/desbloqueado ou mudou de aba,
+                    // o lock pode ter sido libertado. Pede-o novamente.
+                    console.log('Visibilidade restaurada, a pedir wake lock novamente.');
+                    await requestWakeLock();
+                }
+            });
+
+            // --- (v9) PWA Service Worker Registration ---
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js')
+                        .then(registration => {
+                            console.log('Service Worker PWA registrado com sucesso:', registration);
+                        })
+                        .catch(error => {
+                            console.log('Falha ao registrar Service Worker PWA:', error);
+                        });
+                });
+            }
 
 
             // --- Chamada Inicial ---
