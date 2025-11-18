@@ -1,77 +1,75 @@
-// PWA Service Worker (v10)
-// Isto torna a app "instalável" e permite o funcionamento offline.
+// PWA Service Worker (v11 - Audio Update)
+// Atualizado para forçar o download da nova versão da app (v11).
 
-const CACHE_NAME = 'assistente-visita-cache-v10';
-// A 'URLS_TO_CACHE' deve incluir o caminho exato para o ficheiro no GitHub Pages
+const CACHE_NAME = 'assistente-visita-cache-v11';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
   'manifest.json',
-  'https://cdn.tailwindcss.com' // (v10) Adiciona o Tailwind ao cache
+  'https://cdn.tailwindcss.com'
 ];
 
-// 1. Instalação do Service Worker (Cache dos ficheiros principais)
+// 1. Instalação: Baixa os arquivos essenciais
 self.addEventListener('install', event => {
-  console.log('Service Worker: Instalando...');
+  console.log('SW: Instalando v11...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker: Cache aberto, a adicionar ficheiros principais.');
+        console.log('SW: Cache aberto. Adicionando arquivos.');
+        // Tenta adicionar todos. Se falhar em um, tenta individualmente para garantir que o máximo possível seja salvo.
         return cache.addAll(URLS_TO_CACHE).catch(err => {
-            console.warn('SW: Falha ao adicionar todos os ficheiros iniciais ao cache. Tentando URLs individuais.', err);
+            console.warn('SW: Falha no addAll, tentando adicionar individualmente.', err);
             return Promise.all(
                 URLS_TO_CACHE.map(url => cache.add(url).catch(e => console.warn(`SW: Falha ao carregar ${url}`, e)))
             );
         });
       })
-      .then(() => self.skipWaiting()) // Ativa o novo SW imediatamente
+      .then(() => self.skipWaiting()) // Força o novo SW a ativar imediatamente
   );
 });
 
-// 2. Ativação (Limpa caches antigos)
+// 2. Ativação: Limpa caches antigos (v1...v10)
 self.addEventListener('activate', event => {
-  console.log('Service Worker: Ativando...');
+  console.log('SW: Ativando v11...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.filter(cacheName => {
-          // Apaga todos os caches que não sejam o atual
+          // Apaga qualquer cache que comece com o nosso prefixo mas não seja o v11
           return cacheName.startsWith('assistente-visita-cache-') && cacheName !== CACHE_NAME;
         }).map(cacheName => {
-          console.log('Service Worker: A apagar cache antigo:', cacheName);
+          console.log('SW: Apagando cache antigo:', cacheName);
           return caches.delete(cacheName);
         })
       );
-    }).then(() => self.clients.claim()) // Controla a página imediatamente
+    }).then(() => self.clients.claim()) // Toma o controlo de todas as abas abertas imediatamente
   );
 });
 
-// 3. Fetch (Estratégia "Stale-While-Revalidate")
+// 3. Fetch: Intercepta pedidos de rede (Estratégia Stale-While-Revalidate)
 self.addEventListener('fetch', event => {
-  // Ignora chamadas para a API do Gemini ou fontes externas
+  // Ignora chamadas para APIs externas (como Gemini) ou analytics
   if (event.request.url.startsWith('http') && !event.request.url.includes('generativelanguage') && !event.request.url.includes('placehold.co')) {
     
     event.respondWith(
       caches.open(CACHE_NAME).then(cache => {
         return cache.match(event.request).then(cachedResponse => {
-          // 1. Vai buscar à rede (Stale-While-Revalidate)
+          // Estratégia: 
+          // 1. Tenta buscar na rede para ter sempre o conteúdo mais fresco
           const fetchPromise = fetch(event.request).then(networkResponse => {
-            // Se a resposta for boa, atualiza o cache
+            // Se a rede responder bem, atualiza o cache para a próxima vez
             if (networkResponse.ok) {
               cache.put(event.request, networkResponse.clone());
             }
             return networkResponse;
           }).catch(err => {
-            console.log('SW: Fetch falhou, a usar o cache se disponível.', err);
-            // Se a rede falhar E tivermos algo no cache, retorna o cache
-            if(cachedResponse) {
-                return cachedResponse;
-            }
-            // Se falhar e não tiver cache, o browser vai mostrar o erro de offline
+            // Se a rede falhar (offline), não faz nada (já temos o cachedResponse ou vamos falhar)
+            console.log('SW: Rede indisponível, usando cache.', err);
+            if (cachedResponse) return cachedResponse;
           });
 
-          // 2. Retorna o cache imediatamente se disponível,
-          // enquanto a rede atualiza em segundo plano.
+          // 2. Se tivermos cache, retorna-o IMEDIATAMENTE para performance,
+          // enquanto a rede atualiza em segundo plano (se estiver online).
           return cachedResponse || fetchPromise;
         });
       })
