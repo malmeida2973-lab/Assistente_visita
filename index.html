@@ -1,527 +1,331 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente de Visita AI</title>
-    
-    <!-- PWA -->
+    <title>Assistente Externo</title> <!-- Nome Atualizado -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=AV">
-
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=AE"> <!-- AE de Assistente Externo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .transcript-box { min-height: 150px; }
         .modal { display: none; transition: opacity 0.3s ease; }
         .modal-overlay { background-color: rgba(0, 0, 0, 0.6); }
         .modal.flex { display: flex; }
         .task-completed { text-decoration: line-through; color: #9ca3af; }
-        .task-text { cursor: pointer; flex-grow: 1; }
-        .ai-section { display: none; }
         .input-field { @apply border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500; }
         .label-disabled { @apply opacity-50 cursor-not-allowed; }
-        
-        /* Overlay de Privacidade (v11) */
-        #privacy-overlay {
-            position: fixed; inset: 0; background-color: #000000;
-            z-index: 9999; display: none; align-items: center; justify-content: center;
-            text-align: center; color: #333; font-size: 1rem; cursor: pointer;
-            touch-action: manipulation; /* Melhora a resposta ao toque */
-        }
+        #privacy-overlay { position: fixed; inset: 0; background-color: #000000; z-index: 9999; display: none; align-items: center; justify-content: center; text-align: center; color: #333; font-size: 1rem; cursor: pointer; touch-action: manipulation; }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 text-gray-900 min-h-screen p-4">
-
-    <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-5xl w-full mx-auto relative">
+<body class="min-h-screen flex justify-center p-0 sm:p-4">
+    <div class="bg-white sm:rounded-2xl shadow-xl w-full max-w-5xl mx-auto relative flex flex-col min-h-screen sm:min-h-0 overflow-hidden">
         
-        <!-- Cabeçalho -->
-        <header class="flex justify-between items-start mb-6">
-            <div class="flex-1"></div>
-            <div class="text-center">
-                <h1 class="text-3xl font-bold text-indigo-700">Assistente de Visita</h1>
-                <p class="text-gray-600 mt-2">Grave agora, transcreva com IA depois.</p>
+        <!-- Cabeçalho v25 -->
+        <header class="flex justify-between items-center p-6 bg-indigo-600 text-white shadow-md">
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold tracking-tight">Assistente Externo</h1>
+                <p class="text-indigo-200 text-xs font-medium mt-0.5 opacity-90">v25 • By. m.almeida</p>
             </div>
-            <div class="flex-1 text-right space-x-4 flex justify-end">
-                <button id="privacy-button" class="text-gray-500 hover:text-indigo-600 transition duration-300 flex flex-col items-center" title="Modo Privacidade (Apagar Ecrã)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" /></svg>
-                    <span class="text-xs">Ecrã</span>
+            <div class="flex gap-4">
+                <button id="privacy-button" class="text-white hover:text-indigo-200 transition flex flex-col items-center">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <span class="text-[10px]">Ecrã</span>
                 </button>
-                <button id="settings-button" class="text-gray-500 hover:text-indigo-600 transition duration-300 flex flex-col items-center" title="Configurações">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.09 2.573-1.066z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span class="text-xs">Config</span>
+                <button id="settings-button" class="text-white hover:text-indigo-200 transition flex flex-col items-center">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.09 2.573-1.066z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <span class="text-[10px]">Config</span>
                 </button>
             </div>
         </header>
 
-        <!-- Seção Tarefas -->
-        <div class="border-b-2 border-gray-200 pb-6 mb-6">
-            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Tarefas Pendentes</h2>
-            <div class="flex gap-3 mb-4">
-                <input type="text" id="task-input" class="mt-1 block w-full input-field flex-grow border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Adicionar nova tarefa...">
-                <button id="add-task-button" class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">Adicionar</button>
+        <!-- Main Content -->
+        <div class="p-6 space-y-8">
+            <!-- Tarefas -->
+            <div class="border-b-2 border-gray-200 pb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-3">Tarefas do Dia</h2>
+                <div class="flex gap-2 mb-3"><input type="text" id="task-input" class="block w-full input-field px-3 py-2" placeholder="Nova tarefa..."><button id="add-task-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">+</button></div>
+                <div id="task-list" class="space-y-2 max-h-[200px] overflow-y-auto pr-1"><p id="tasks-loading" class="text-sm text-gray-500">A carregar...</p></div>
             </div>
-            <div id="task-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2"><p id="tasks-loading" class="text-gray-500">Carregando tarefas...</p></div>
+            <!-- Agendamentos -->
+            <div class="border-b-2 border-gray-200 pb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-3">Visitas Agendadas</h2>
+                <button onclick="document.getElementById('schedule-form').classList.toggle('hidden')" class="text-sm text-indigo-600 font-medium mb-3 hover:underline">+ Novo Agendamento</button>
+                <div id="schedule-form" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                    <div class="grid grid-cols-1 gap-3 mb-3"><input type="text" id="scheduledClientName" class="input-field px-3 py-2" placeholder="Nome do Cliente"><input type="text" id="scheduledContactPerson" class="input-field px-3 py-2" placeholder="Contato"><input type="email" id="scheduledEmail" class="input-field px-3 py-2" placeholder="Email"></div>
+                    <button id="saveScheduleButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg">Salvar</button>
+                </div>
+                <div id="scheduled-visits-list" class="space-y-3 max-h-[200px] overflow-y-auto"><p id="scheduled-loading" class="text-sm text-gray-500">A carregar...</p></div>
+            </div>
+            <!-- Gravação -->
+            <div class="border-b-2 border-gray-200 pb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Gravação</h2>
+                <div class="grid grid-cols-1 gap-3 mb-4"><input type="text" id="clientNameInput" class="input-field px-3 py-2" placeholder="Cliente (Obrigatório)"><div class="grid grid-cols-2 gap-3"><input type="text" id="contactPersonInput" class="input-field px-3 py-2" placeholder="Contato"><input type="email" id="emailInput" class="input-field px-3 py-2" placeholder="Email"></div></div>
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
+                    <div id="timerDisplay" class="text-3xl font-mono font-bold text-gray-700 mb-4">00:00:00</div>
+                    <div class="flex flex-wrap justify-center gap-3"><button id="startButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition transform active:scale-95">Gravar</button><button id="stopButton" disabled class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition transform active:scale-95 disabled:opacity-50">Parar</button></div>
+                    <div class="mt-4 flex justify-center gap-3"><button id="saveManualButton" class="text-sm text-blue-600 hover:underline">Manual (Sem Áudio)</button><span class="text-gray-300">|</span><button id="clearButton" class="text-sm text-gray-500 hover:text-gray-700">Limpar</button></div>
+                    <div id="status" class="text-xs text-gray-500 mt-2 h-4">Pronto.</div>
+                </div>
+            </div>
+            <!-- Histórico -->
+            <div><h2 class="text-xl font-bold text-gray-800 mb-4">Histórico</h2><div id="history-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-1"><p id="history-loading" class="text-sm text-gray-500">A carregar...</p></div></div>
         </div>
+    </div>
 
-        <!-- Seção Agendamentos -->
-        <div class="border-b-2 border-gray-200 pb-6 mb-6">
-            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Agendamentos</h2>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-3">Agendar Nova Visita</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cliente</label><input type="text" id="scheduledClientName" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="Empresa X"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Contato</label><input type="text" id="scheduledContactPerson" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="Sr. João"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="scheduledEmail" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="email@exemplo.com"></div>
-                </div>
-                <div class="text-right mt-4"><button id="saveScheduleButton" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-300">Agendar Visita</button></div>
-            </div>
-            <div>
-                <h3 class="text-lg font-semibold text-gray-800 mb-3">Visitas Agendadas (A Fazer)</h3>
-                <div id="scheduled-visits-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2"><p id="scheduled-loading" class="text-gray-500">Carregando agendamentos...</p></div>
-            </div>
-        </div>
+    <!-- Modais -->
+    <div id="privacy-overlay"><div><svg class="h-16 w-16 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" stroke-linecap="round" stroke-linejoin="round"></path></svg><p class="font-bold text-lg">Ecrã Oculto</p><p class="text-sm text-gray-500 mt-2">Toque 2x para voltar</p></div></div>
 
-        <!-- Seção Gravação -->
-        <div class="border-b-2 border-gray-200 pb-6 mb-6">
-            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Gravação da Visita</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cliente:</label><input type="text" id="clientNameInput" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="Cliente"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Contato:</label><input type="text" id="contactPersonInput" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="Contato"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Email:</label><input type="email" id="emailInput" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="Email"></div>
+    <div id="settings-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-2xl shadow-xl w-full max-w-md z-10 overflow-hidden"><div class="flex justify-between items-center p-4 bg-gray-50 border-b"><h3 class="font-bold text-gray-800">Configurações</h3><button id="settings-modal-close-button" class="text-gray-500">✕</button></div>
+        <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div><label class="block text-sm font-medium text-gray-700 mb-1">Provedor de IA</label>
+                <select id="ai-provider-select" class="w-full input-field px-3 py-2 bg-white">
+                    <option value="google">Google Gemini (Grátis)</option>
+                    <option value="groq">Groq Cloud (Grátis/Beta)</option>
+                </select>
             </div>
-
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-700">Tempo:</span>
-                    <span id="timerDisplay" class="text-2xl font-bold text-red-600">00:00:00</span>
-                </div>
-                <div class="flex flex-wrap items-center justify-center gap-4">
-                    <button id="startButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                        Iniciar Gravação
-                    </button>
-                    <button id="stopButton" disabled class="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Parar e Salvar
-                    </button>
-                    <button id="saveManualButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                        Anotação Manual
-                    </button>
-                    <button id="clearButton" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
-                        Limpar
-                    </button>
-                </div>
-            </div>
-            <div id="status" class="text-center text-gray-700 font-medium mb-4">Status: Ocioso</div>
             
-            <!-- (v11) Transcrição em Tempo Real OCULTA (Usada apenas para anotações manuais) -->
-            <div class="hidden">
-               <div id="interim-transcript"></div>
-            </div>
-            <!-- Campo oculto apenas para lógica de anotação manual -->
-            <textarea id="final-transcript" class="hidden"></textarea>
-            
-            <p class="text-center text-sm text-gray-500 italic">A transcrição será feita pela IA após salvar a gravação. Para anotação manual, clique no botão azul.</p>
-        </div>
-
-        <!-- Seção Histórico -->
-        <div id="history-section" class="mt-8">
-            <h2 class="text-2xl font-bold text-indigo-700 mb-4">Histórico de Visitas (Concluídas)</h2>
-            <div id="history-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"><p id="history-loading" class="text-gray-500">Carregando histórico...</p></div>
-        </div>
-    </div>
-
-    <!-- Modal Privacidade (ECRÃ PRETO) -->
-    <div id="privacy-overlay">
-        <div>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" />
-            </svg>
-            <p class="font-bold">Ecrã Oculto</p>
-            <p class="text-sm text-gray-500 mt-2">(Toque 2x para voltar)</p>
-        </div>
-    </div>
-
-    <!-- Modal Configurações -->
-    <div id="settings-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4">
-        <div class="modal-overlay fixed inset-0"></div>
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg z-10">
-            <div class="flex justify-between items-center p-4 border-b"><h3 class="text-xl font-bold text-indigo-700">Configurações</h3><button id="settings-modal-close-button" class="text-gray-400 hover:text-gray-600">X</button></div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave de API do Gemini</label>
-                    <input type="password" id="gemini-api-key-input" class="mt-1 block w-full input-field border-gray-300 rounded-md shadow-sm" placeholder="Cole a sua chave aqui">
-                    <p class="text-xs text-gray-500 mt-2">Obtenha no <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline">Google AI Studio</a>.</p>
-                    <div id="api-key-status" class="text-sm font-medium mt-2"></div>
-                </div>
-                <div class="border-t border-gray-200 pt-4 mt-4">
-                    <h4 class="text-md font-medium text-gray-800 mb-2">Backup e Restauração</h4>
-                    <div class="flex flex-wrap gap-4">
-                        <button id="export-data-button" disabled class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-50">Exportar (.json)</button>
-                        <input type="file" id="import-data-input" class="hidden" accept=".json" disabled>
-                        <label for="import-data-input" id="import-data-label" class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition cursor-pointer label-disabled">Importar (.json)</label>
-                    </div>
-                    <div id="backup-status" class="text-sm font-medium mt-3 text-gray-500">A iniciar base de dados...</div>
-                </div>
-            </div>
-            <div class="flex justify-end p-4 bg-gray-50 border-t rounded-b-2xl"><button id="save-api-key-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">Salvar Chave</button></div>
-        </div>
-    </div>
-
-    <!-- Modal Detalhes da Visita -->
-    <div id="visit-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4">
-        <div class="modal-overlay fixed inset-0"></div>
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl z-10 max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b"><h3 id="modal-title" class="text-xl font-bold text-indigo-700">Detalhes</h3><button id="modal-close-button" class="text-gray-400 hover:text-gray-600">X</button></div>
-            <div class="p-6 space-y-4 overflow-y-auto">
-                <p class="text-sm text-gray-600">Cliente: <span id="modal-client-name" class="font-medium text-gray-900"></span></p>
-                <p class="text-sm text-gray-600">Data: <span id="modal-date-time" class="font-medium text-gray-900"></span></p>
-                
-                <div id="modal-audio-section">
-                    <h4 class="text-md font-medium text-gray-700 mb-2">Áudio da Visita:</h4>
-                    <audio id="modalAudioPlayer" controls class="w-full mb-2"></audio>
-                    <!-- Botão de Transcrição de Áudio -->
-                    <button id="modal-ai-transcribe-audio-button" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition ai-button" style="display: none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                        ✨ Transcrever Áudio (Gemini)
-                    </button>
-                    <p class="text-xs text-gray-500 mt-1">Nota: Ficheiros longos podem demorar. Se falhar, o ficheiro é demasiado grande para o upload direto.</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Transcrição / Notas:</label>
-                    <textarea id="modalTranscriptTextarea" class="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="8"></textarea>
-                </div>
-                <div id="modal-status-message" class="text-sm text-green-700 font-medium"></div>
-
-                <!-- Secções de IA -->
-                <div id="modal-ai-summary-section" class="ai-section space-y-2"><label class="block text-sm font-medium text-gray-700">Resumo:</label><textarea id="ai-summary-result" class="w-full p-3 bg-indigo-50 border-indigo-200 text-gray-900 rounded-lg" rows="5" readonly></textarea></div>
-                <div id="modal-ai-tasks-section" class="ai-section space-y-2"><label class="block text-sm font-medium text-gray-700">Tarefas:</label><textarea id="ai-tasks-result" class="w-full p-3 bg-indigo-50 border-indigo-200 text-gray-900 rounded-lg" rows="5"></textarea><button id="add-ai-tasks-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">Adicionar Tarefas</button></div>
+            <div id="google-settings">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Chave API Gemini</label>
+                <input type="password" id="gemini-api-key-input" class="w-full input-field px-3 py-2" placeholder="Cole a chave aqui">
+                <label class="block text-sm font-medium text-gray-700 mt-3 mb-1">Modelo Gemini (Nome Técnico)</label>
+                <input type="text" id="gemini-model-input" class="w-full input-field px-3 py-2 bg-gray-50 font-mono text-sm" value="gemini-1.5-flash">
+                <p class="text-xs text-gray-500 mt-1">Padrão: gemini-1.5-flash.</p>
             </div>
 
-            <div class="flex flex-wrap justify-between items-center gap-3 p-4 bg-gray-50 border-t rounded-b-2xl">
-                <div class="flex gap-3">
-                    <button id="modal-ai-summarize-button" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg ai-button" style="display: none;">Resumir</button>
-                    <button id="modal-ai-extract-button" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg ai-button" style="display: none;">Tarefas</button>
-                </div>
-                <div class="flex gap-3">
-                    <button id="modal-save-changes-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Salvar</button>
-                    <button id="modal-export-button" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Exportar</button>
-                </div>
+            <div id="groq-settings" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Chave API Groq</label>
+                <input type="password" id="groq-api-key-input" class="w-full input-field px-3 py-2" placeholder="gsk_...">
+                <p class="text-xs text-gray-500 mt-1">Obtenha em console.groq.com. Usa Whisper Large v3.</p>
             </div>
-        </div>
-    </div>
 
-    <!-- Modal Apagar -->
-    <div id="delete-confirm-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-2xl shadow-xl w-full max-w-sm z-10 p-6 text-center"><h3 class="text-lg font-medium text-gray-900 mb-2">Apagar?</h3><p id="delete-confirm-text" class="text-sm text-gray-600 mb-6">Ação irreversível.</p><div class="flex justify-center gap-4"><button id="delete-confirm-cancel" class="py-2 px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg">Cancelar</button><button id="delete-confirm-ok" class="py-2 px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg">Apagar</button></div></div></div>
+            <div class="pt-4 border-t"><button id="export-data-button" class="w-full bg-blue-100 text-blue-700 font-bold py-2 rounded mb-2">Exportar Dados</button><input type="file" id="import-data-input" class="hidden" accept=".json"><label for="import-data-input" class="block w-full text-center bg-green-100 text-green-700 font-bold py-2 rounded cursor-pointer">Importar Dados</label></div>
+            <div class="pt-2"><button id="force-update-button" class="w-full border border-red-300 text-red-500 font-bold py-2 rounded text-xs">Forçar Atualização (Reset)</button></div>
+        </div>
+        <div class="p-4 bg-gray-50 border-t flex justify-end"><button id="save-settings-button" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded">Salvar</button></div>
+    </div></div>
+
+    <div id="visit-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl z-10 max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b"><h3 id="modal-title" class="text-lg font-bold text-gray-800">Detalhes</h3><button id="modal-close-button" class="text-gray-500 text-xl">✕</button></div>
+        <div class="p-6 space-y-4 overflow-y-auto flex-grow">
+            <div><span class="text-xs text-gray-500 uppercase">Cliente</span><p id="modal-client-name" class="font-bold text-lg text-gray-900"></p></div>
+            <div id="modal-audio-section" class="bg-gray-50 p-3 rounded-lg border"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 uppercase">Áudio</span></div><audio id="modalAudioPlayer" controls class="w-full mb-3 h-10"></audio><button id="modal-ai-transcribe-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2 transition">✨ Transcrever (Auto IA)</button></div>
+            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Transcrição</label><textarea id="modalTranscriptTextarea" class="w-full p-3 bg-white border border-gray-300 rounded-lg" rows="6"></textarea></div>
+            <div id="modal-status-message" class="text-xs font-bold h-4"></div>
+            <div class="flex gap-2"><button id="modal-ai-summarize-button" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded">Resumir</button><button id="modal-ai-extract-button" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded">Tarefas</button></div>
+            <div id="modal-ai-result-area" class="hidden"><textarea id="ai-result-text" class="w-full p-3 bg-indigo-50 border border-indigo-100 rounded-lg mt-2" rows="4" readonly></textarea></div>
+        </div>
+        <div class="p-4 bg-gray-50 border-t flex justify-end gap-2"><button id="modal-save-changes-button" class="bg-green-600 text-white font-bold py-2 px-4 rounded">Salvar</button><button id="modal-export-button" class="bg-purple-600 text-white font-bold py-2 px-4 rounded">Exportar</button></div>
+    </div></div>
+
+    <div id="delete-confirm-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-xl shadow-xl w-full max-w-xs p-6 text-center"><h3 class="text-lg font-bold text-gray-800 mb-2">Apagar?</h3><div class="flex justify-center gap-3 mt-4"><button id="delete-confirm-cancel" class="flex-1 py-2 bg-gray-200 text-gray-700 font-bold rounded">Não</button><button id="delete-confirm-ok" class="flex-1 py-2 bg-red-600 text-white font-bold rounded">Sim</button></div></div></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Variáveis ---
             let mediaRecorder, audioChunks = [], audioStream, timerInterval, startTime, wakeLock = null;
-            let userApiKey = null;
-            // Endpoint para Gemini 1.5 Flash (Suporta Áudio)
-            const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
-            let db, currentVisitIdToExport = null, currentVisitDataToExport = null, currentScheduledVisitId = null;
-            const DB_NAME = "VisitAssistantDB", DB_VERSION = 3, VISIT_STORE = "visits", SCHEDULE_STORE = "scheduledVisits", TASK_STORE = "tasks";
+            let db, currentVisitIdToExport=null, currentVisitDataToExport=null, deleteConfig={id:null,store:null};
+            const DB_NAME="VisitAssistantDB", DB_VERSION=4, VISIT_STORE="visits", SCHEDULE_STORE="scheduledVisits", TASK_STORE="tasks";
 
-            // --- Elementos UI ---
-            const settingsButton = document.getElementById('settings-button'), settingsModal = document.getElementById('settings-modal'), settingsModalCloseButton = document.getElementById('settings-modal-close-button'), geminiApiKeyInput = document.getElementById('gemini-api-key-input'), saveApiKeyButton = document.getElementById('save-api-key-button'), apiKeyStatus = document.getElementById('api-key-status'), settingsModalOverlay = settingsModal.querySelector('.modal-overlay');
-            const privacyButton = document.getElementById('privacy-button'), privacyOverlay = document.getElementById('privacy-overlay');
-            const exportDataButton = document.getElementById('export-data-button'), importDataInput = document.getElementById('import-data-input'), importDataLabel = document.getElementById('import-data-label'), backupStatus = document.getElementById('backup-status');
-            const taskInput = document.getElementById('task-input'), addTaskButton = document.getElementById('add-task-button'), taskList = document.getElementById('task-list'), tasksLoading = document.getElementById('tasks-loading');
-            const scheduledClientNameInput = document.getElementById('scheduledClientName'), scheduledContactPersonInput = document.getElementById('scheduledContactPerson'), scheduledEmailInput = document.getElementById('scheduledEmail'), saveScheduleButton = document.getElementById('saveScheduleButton'), scheduledVisitsList = document.getElementById('scheduled-visits-list'), scheduledLoading = document.getElementById('scheduled-loading');
-            const startButton = document.getElementById('startButton'), stopButton = document.getElementById('stopButton'), clearButton = document.getElementById('clearButton'), saveManualButton = document.getElementById('saveManualButton'), statusDiv = document.getElementById('status'), timerDisplay = document.getElementById('timerDisplay'), clientNameInput = document.getElementById('clientNameInput'), contactPersonInput = document.getElementById('contactPersonInput'), emailInput = document.getElementById('emailInput');
-            const historyList = document.getElementById('history-list'), historyLoading = document.getElementById('history-loading');
-            const visitModal = document.getElementById('visit-modal'), modalCloseButton = document.getElementById('modal-close-button'), modalOverlay = visitModal.querySelector('.modal-overlay'), modalTitle = document.getElementById('modal-title'), modalClientName = document.getElementById('modal-client-name'), modalDate = document.getElementById('modal-date-time'), modalAudioSection = document.getElementById('modal-audio-section'), modalAudioPlayer = document.getElementById('modalAudioPlayer'), modalTranscriptTextarea = document.getElementById('modalTranscriptTextarea'), modalSaveChangesButton = document.getElementById('modal-save-changes-button'), modalExportButton = document.getElementById('modal-export-button'), modalStatusMessage = document.getElementById('modal-status-message');
-            const modalAiTranscribeAudioButton = document.getElementById('modal-ai-transcribe-audio-button');
-            const modalAiSummarizeButton = document.getElementById('modal-ai-summarize-button'), modalAiExtractButton = document.getElementById('modal-ai-extract-button'), modalAiSummarySection = document.getElementById('modal-ai-summary-section'), aiSummaryResult = document.getElementById('ai-summary-result'), modalAiTasksSection = document.getElementById('modal-ai-tasks-section'), aiTasksResult = document.getElementById('ai-tasks-result'), addAiTasksButton = document.getElementById('add-ai-tasks-button');
-            const deleteConfirmModal = document.getElementById('delete-confirm-modal'), deleteConfirmText = document.getElementById('delete-confirm-text'), deleteConfirmCancel = document.getElementById('delete-confirm-cancel'), deleteConfirmOk = document.getElementById('delete-confirm-ok'), deleteModalOverlay = deleteConfirmModal.querySelector('.modal-overlay');
-            let deleteConfig = { id: null, store: null };
+            const els={
+                settingsBtn: document.getElementById('settings-button'), settingsModal: document.getElementById('settings-modal'), settingsClose: document.getElementById('settings-modal-close-button'), saveSettingsBtn: document.getElementById('save-settings-button'),
+                providerSelect: document.getElementById('ai-provider-select'), googleSettings: document.getElementById('google-settings'), groqSettings: document.getElementById('groq-settings'),
+                apiKeyInput: document.getElementById('gemini-api-key-input'), modelInput: document.getElementById('gemini-model-input'), groqKeyInput: document.getElementById('groq-api-key-input'),
+                forceUpdateBtn: document.getElementById('force-update-button'), privacyBtn: document.getElementById('privacy-button'), privacyOverlay: document.getElementById('privacy-overlay'),
+                exportBtn: document.getElementById('export-data-button'), importInput: document.getElementById('import-data-input'), backupStatus: document.getElementById('backup-status'),
+                taskInput: document.getElementById('task-input'), addTaskBtn: document.getElementById('add-task-button'), taskList: document.getElementById('task-list'), tasksLoading: document.getElementById('tasks-loading'),
+                schName: document.getElementById('scheduledClientName'), schContact: document.getElementById('scheduledContactPerson'), schEmail: document.getElementById('scheduledEmail'), saveSchBtn: document.getElementById('saveScheduleButton'), schList: document.getElementById('scheduled-visits-list'), schLoading: document.getElementById('scheduled-loading'),
+                startBtn: document.getElementById('startButton'), stopBtn: document.getElementById('stopButton'), clearBtn: document.getElementById('clearButton'), manualBtn: document.getElementById('saveManualButton'), status: document.getElementById('status'), timer: document.getElementById('timerDisplay'), cName: document.getElementById('clientNameInput'), cContact: document.getElementById('contactPersonInput'), cEmail: document.getElementById('emailInput'),
+                histList: document.getElementById('history-list'), histLoading: document.getElementById('history-loading'),
+                vModal: document.getElementById('visit-modal'), vClose: document.getElementById('modal-close-button'), vTitle: document.getElementById('modal-title'), vName: document.getElementById('modal-client-name'), vAudioSec: document.getElementById('modal-audio-section'), vAudio: document.getElementById('modalAudioPlayer'), vText: document.getElementById('modalTranscriptTextarea'), vSave: document.getElementById('modal-save-changes-button'), vExport: document.getElementById('modal-export-button'), vMsg: document.getElementById('modal-status-message'),
+                transcribeBtn: document.getElementById('modal-ai-transcribe-button'), sumBtn: document.getElementById('modal-ai-summarize-button'), extBtn: document.getElementById('modal-ai-extract-button'), aiResArea: document.getElementById('modal-ai-result-area'), aiResText: document.getElementById('ai-result-text'),
+                delModal: document.getElementById('delete-confirm-modal'), delCancel: document.getElementById('delete-confirm-cancel'), delOk: document.getElementById('delete-confirm-ok')
+            };
 
-            // --- Funções Auxiliares ---
-            const blobToBase64 = (blob) => new Promise((resolve, reject) => { if(!blob) resolve(null); const reader = new FileReader(); reader.readAsDataURL(blob); reader.onloadend = () => resolve(reader.result); reader.onerror = error => reject(error); });
-            const base64ToBlob = (b64) => { if(!b64) return null; try { const p = b64.split(';base64,'); const c = p[0].split(':')[1]; const b = atob(p[1]); const a = []; for(let i=0;i<b.length;i+=512){ const s = b.slice(i,i+512); const n = new Array(s.length); for(let j=0;j<s.length;j++) n[j] = s.charCodeAt(j); a.push(new Uint8Array(n)); } return new Blob(a, {type:c}); } catch(e){ return null; } };
-            const promisifyDbRequest = (req) => new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = (e) => rej(e.target.error); });
+            // Helpers
+            const blobToBase64=(b)=>new Promise((r,j)=>{if(!b)r(null);const fr=new FileReader();fr.readAsDataURL(b);fr.onloadend=()=>r(fr.result);fr.onerror=j;});
+            const base64ToBlob=(b64)=>{if(!b64)return null;try{const p=b64.split(';base64,');return new Blob([Uint8Array.from(atob(p[1]),c=>c.charCodeAt(0))],{type:p[0].split(':')[1]});}catch(e){return null;}};
+            const promisify=(req)=>new Promise((r,j)=>{req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error);});
 
-            // --- API Gemini (v11 - Áudio + Texto) ---
-            function loadApiKey() {
-                const k = localStorage.getItem('geminiApiKey');
-                if(k) { userApiKey = k; geminiApiKeyInput.value = k; apiKeyStatus.textContent = 'Chave carregada.'; apiKeyStatus.className = 'text-green-700 text-sm'; }
-                else { apiKeyStatus.textContent = 'Sem chave.'; apiKeyStatus.className = 'text-red-700 text-sm'; }
+            function loadSettings(){
+                els.apiKeyInput.value = localStorage.getItem('geminiApiKey') || '';
+                els.modelInput.value = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
+                els.groqKeyInput.value = localStorage.getItem('groqApiKey') || '';
+                els.providerSelect.value = localStorage.getItem('aiProvider') || 'google';
+                toggleProviderUI();
             }
+            function saveSettings(){
+                localStorage.setItem('geminiApiKey', els.apiKeyInput.value.trim());
+                localStorage.setItem('geminiModel', els.modelInput.value.trim() || 'gemini-1.5-flash');
+                localStorage.setItem('groqApiKey', els.groqKeyInput.value.trim());
+                localStorage.setItem('aiProvider', els.providerSelect.value);
+                els.settingsModal.style.display='none';
+            }
+            function toggleProviderUI(){
+                const isGroq = els.providerSelect.value === 'groq';
+                els.googleSettings.style.display = isGroq ? 'none' : 'block';
+                els.groqSettings.style.display = isGroq ? 'block' : 'none';
+            }
+            els.providerSelect.onchange = toggleProviderUI;
+            els.saveSettingsBtn.onclick = saveSettings;
 
-            async function callGeminiApi(promptText, buttonElement, inlineData = null) {
-                if (!userApiKey) { modalStatusMessage.textContent = 'Erro: Chave API em falta.'; return null; }
-                const originalText = buttonElement.innerHTML;
-                buttonElement.innerHTML = '⏳ A processar...'; buttonElement.disabled = true;
-
-                const parts = [{ "text": promptText }];
-                if (inlineData) {
-                    parts.push({ "inlineData": { "mimeType": inlineData.mimeType, "data": inlineData.data } });
-                }
-
-                const payload = {
-                    "contents": [{ "parts": parts }],
-                    "generationConfig": { "temperature": 0.4, "maxOutputTokens": 4000 }
-                };
-
+            async function callAI(type, data) {
+                const provider = localStorage.getItem('aiProvider') || 'google';
+                els.vMsg.textContent = `A processar com ${provider}...`;
                 try {
-                    const res = await fetch(GEMINI_API_URL + userApiKey, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                    if(!res.ok) throw new Error((await res.json()).error.message || res.status);
-                    const json = await res.json();
-                    return json.candidates[0].content.parts[0].text;
+                    if (provider === 'google') return await callGoogle(type, data);
+                    if (provider === 'groq') return await callGroq(type, data);
                 } catch (e) {
-                    console.error(e); modalStatusMessage.textContent = `Erro IA: ${e.message}`; return null;
-                } finally {
-                    buttonElement.innerHTML = originalText; buttonElement.disabled = false;
+                    els.vMsg.textContent = `Erro ${provider}: ${e.message}`;
+                    throw e;
                 }
             }
 
-            // --- Banco de Dados ---
-            function initDB() {
-                const r = indexedDB.open(DB_NAME, DB_VERSION);
-                r.onerror = () => { statusDiv.textContent = 'Erro DB.'; };
-                r.onsuccess = (e) => {
-                    db = e.target.result;
-                    exportDataButton.disabled = false; importDataInput.disabled = false; importDataLabel.classList.remove('label-disabled'); backupStatus.textContent = 'Pronto.';
-                    loadHistory(); loadScheduledVisits(); loadTasks(); loadApiKey();
-                };
-                r.onupgradeneeded = (e) => {
-                    let d = e.target.result;
-                    if (!d.objectStoreNames.contains(VISIT_STORE)) d.createObjectStore(VISIT_STORE, { keyPath: 'id', autoIncrement: true });
-                    if (!d.objectStoreNames.contains(SCHEDULE_STORE)) d.createObjectStore(SCHEDULE_STORE, { keyPath: 'id', autoIncrement: true });
-                    if (!d.objectStoreNames.contains(TASK_STORE)) d.createObjectStore(TASK_STORE, { keyPath: 'id', autoIncrement: true });
-                };
+            async function callGoogle(type, data) {
+                const key = localStorage.getItem('geminiApiKey');
+                const model = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
+                if (!key) throw new Error("Chave Google em falta");
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+                let prompt = "";
+                const parts = [];
+                if (type === 'transcribe') {
+                    prompt = "Transcreva o áudio fielmente em Português.";
+                    const b64 = await blobToBase64(data); 
+                    parts.push({ text: prompt });
+                    parts.push({ inlineData: { mimeType: b64.split(';')[0].split(':')[1], data: b64.split(',')[1] } });
+                } else {
+                    prompt = type === 'summarize' ? `Resuma:\n"${data}"` : `Extraia tarefas:\n"${data}"`;
+                    parts.push({ text: prompt });
+                }
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: parts }] }) });
+                if (!res.ok) {
+                    const err = await res.json().catch(()=>{});
+                    throw new Error(err?.error?.message || res.status);
+                }
+                const json = await res.json();
+                return json.candidates[0].content.parts[0].text;
             }
 
-            // --- Funções de Negócio (Compactadas) ---
-            function saveTask(t){if(!db)return;const tr=db.transaction([TASK_STORE],'readwrite');tr.objectStore(TASK_STORE).add({text:t,completed:false});tr.onsuccess=loadTasks;}
-            function loadTasks(){if(!db)return;const r=db.transaction([TASK_STORE],'readonly').objectStore(TASK_STORE).getAll();r.onsuccess=(e)=>{taskList.innerHTML='';e.target.result.sort((a,b)=>a.completed-b.completed).forEach(t=>{const d=document.createElement('div');d.className='flex justify-between items-center p-3 bg-white border rounded shadow-sm';d.innerHTML=`<span class="task-text ${t.completed?'task-completed':''}" data-id="${t.id}">${t.text}</span><button data-id="${t.id}" class="del-task text-red-500">X</button>`;taskList.appendChild(d);});}}
-            taskList.addEventListener('click',e=>{if(e.target.classList.contains('task-text')){updateTask(e.target.dataset.id)}if(e.target.classList.contains('del-task')){delTask(e.target.dataset.id)}});
-            function updateTask(id){if(!db)return;const s=db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE);s.get(parseInt(id)).onsuccess=(e)=>{let d=e.target.result;d.completed=!d.completed;s.put(d).onsuccess=loadTasks;}}
-            function delTask(id){if(!db)return;db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE).delete(parseInt(id)).onsuccess=loadTasks;}
-            
-            function saveSchedule(){const n=scheduledClientNameInput.value,c=scheduledContactPersonInput.value,e=scheduledEmailInput.value;if(!n){alert('Nome obrigatório');return;}db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).add({clientName:n,contactPerson:c,email:e,status:'scheduled'}).onsuccess=()=>{loadScheduledVisits();scheduledClientNameInput.value='';};}
-            function loadScheduledVisits(){if(!db)return;db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll().onsuccess=(e)=>{scheduledVisitsList.innerHTML='';e.target.result.filter(s=>s.status==='scheduled').forEach(s=>{const d=document.createElement('div');d.className='flex justify-between p-4 bg-indigo-50 border rounded shadow-sm';d.innerHTML=`<div><b>${s.clientName}</b><br>${s.contactPerson}</div><div><button data-id="${s.id}" class="load-sch bg-green-600 text-white px-3 py-1 rounded mr-2">Ir</button><button data-id="${s.id}" class="del-sch bg-red-500 text-white px-3 py-1 rounded">X</button></div>`;scheduledVisitsList.appendChild(d);});}}
-            scheduledVisitsList.addEventListener('click',e=>{if(e.target.classList.contains('load-sch')){loadSch(e.target.dataset.id)}if(e.target.classList.contains('del-sch')){delSch(e.target.dataset.id)}});
-            function loadSch(id){db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).get(parseInt(id)).onsuccess=(e)=>{const d=e.target.result;clientNameInput.value=d.clientName;contactPersonInput.value=d.contactPerson;emailInput.value=d.email;currentScheduledVisitId=d.id;statusDiv.textContent='Agendamento carregado.';}}
-            function delSch(id){db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).delete(parseInt(id)).onsuccess=loadScheduledVisits;}
-            
-            async function exportData(){if(!db)return;const t=await promisifyDbRequest(db.transaction([TASK_STORE,SCHEDULE_STORE,VISIT_STORE],'readonly').objectStore(TASK_STORE).getAll());const s=await promisifyDbRequest(db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll());const v=await promisifyDbRequest(db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll());const v2=[];for(const i of v){if(i.audioBlob)i.audioBase64=await blobToBase64(i.audioBlob);delete i.audioBlob;v2.push(i);}const b=new Blob([JSON.stringify({tasks:t,scheduledVisits:s,visits:v2,settings:{geminiApiKey:userApiKey}})],{type:'application/json'});const u=URL.createObjectURL(b);const l=document.createElement('a');l.href=u;l.download='backup.json';l.click();}
-            function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async(ev)=>{const d=JSON.parse(ev.target.result);const tr=db.transaction([TASK_STORE,SCHEDULE_STORE,VISIT_STORE],'readwrite');await promisifyDbRequest(tr.objectStore(TASK_STORE).clear());await promisifyDbRequest(tr.objectStore(SCHEDULE_STORE).clear());await promisifyDbRequest(tr.objectStore(VISIT_STORE).clear());d.tasks.forEach(i=>tr.objectStore(TASK_STORE).add(i));d.scheduledVisits.forEach(i=>tr.objectStore(SCHEDULE_STORE).add(i));d.visits.forEach(i=>{if(i.audioBase64)i.audioBlob=base64ToBlob(i.audioBase64);delete i.id;tr.objectStore(VISIT_STORE).add(i);});tr.oncomplete=()=>{alert('Importado!');location.reload();}};r.readAsText(f);}
-
-            // --- Gravação, WakeLock e Histórico ---
-            const requestWakeLock = async () => { if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); statusDiv.textContent = `Gravando (Ecrã Bloqueado)`; } catch (err) { statusDiv.textContent = `Gravando (Sem WakeLock)`; } } };
-            const releaseWakeLock = async () => { if (wakeLock) { try { await wakeLock.release(); wakeLock = null; } catch (err) {} } };
-
-            const startRecording = async () => {
-                if (!clientNameInput.value.trim()) { alert('Nome do cliente obrigatório'); return; }
-                try {
-                    // Tenta preferencialmente Opus para melhor compressão/qualidade no Android
-                    const options = { mimeType: 'audio/webm;codecs=opus' };
-                    if (!MediaRecorder.isTypeSupported(options.mimeType)) { delete options.mimeType; } // Fallback para padrão
-
-                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    isRecording = true; audioChunks = []; startTime = Date.now();
-                    timerInterval = setInterval(() => { timerDisplay.textContent = new Date(Date.now() - startTime).toISOString().slice(11, 19); }, 1000);
-                    
-                    await requestWakeLock();
-                    
-                    mediaRecorder = new MediaRecorder(audioStream, options);
-                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-                    mediaRecorder.onstop = () => {
-                        const blobType = mediaRecorder.mimeType || 'audio/webm';
-                        const audioBlob = new Blob(audioChunks, { type: blobType });
-                        saveVisit({
-                            clientName: clientNameInput.value, contactPerson: contactPersonInput.value, email: emailInput.value,
-                            dateTime: new Date().toISOString(), transcript: '', 
-                            audioBlob: audioBlob
-                        });
-                        audioStream.getTracks().forEach(t => t.stop());
-                    };
-                    mediaRecorder.start();
-                    startButton.disabled = true; stopButton.disabled = false; saveManualButton.disabled = true;
-                    startButton.classList.add('opacity-50'); stopButton.classList.remove('disabled:opacity-50');
-                } catch (err) { alert('Erro microfone: ' + err); }
-            };
-
-            const stopAndSave = async () => {
-                if (!isRecording) return; isRecording = false; clearInterval(timerInterval); await releaseWakeLock();
-                mediaRecorder.stop();
-                startButton.disabled = false; stopButton.disabled = true; saveManualButton.disabled = false;
-                startButton.classList.remove('opacity-50'); stopButton.classList.add('disabled:opacity-50');
-                statusDiv.textContent = 'Visita guardada. Abra o histórico para transcrever.';
-            };
-
-            const saveManual = () => {
-                if (!clientNameInput.value.trim()) { alert('Nome do cliente obrigatório'); return; }
-                saveVisit({
-                    clientName: clientNameInput.value, contactPerson: contactPersonInput.value, email: emailInput.value,
-                    dateTime: new Date().toISOString(), transcript: 'Anotação Manual (Sem Áudio)', audioBlob: null
-                });
-            };
-
-            function saveVisit(data) {
-                db.transaction([VISIT_STORE],'readwrite').objectStore(VISIT_STORE).add(data).onsuccess = () => {
-                    loadHistory();
-                    if(currentScheduledVisitId) { db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).get(currentScheduledVisitId).onsuccess=(e)=>{let d=e.target.result; d.status='completed'; db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).put(d).onsuccess=loadScheduledVisits; currentScheduledVisitId=null;}};
-                    clientNameInput.value=''; contactPersonInput.value=''; emailInput.value=''; timerDisplay.textContent='00:00:00';
-                };
-            }
-
-            function loadHistory() {
-                if (!db) return;
-                db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll().onsuccess = (e) => {
-                    historyList.innerHTML = '';
-                    e.target.result.sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).forEach(v => {
-                        const d = document.createElement('div');
-                        d.className = 'p-4 bg-white border rounded shadow-sm flex justify-between items-center';
-                        d.innerHTML = `<div><b>${v.clientName}</b><br><span class="text-xs text-gray-500">${new Date(v.dateTime).toLocaleString()}</span>
-                        ${!v.audioBlob ? '<span class="text-xs bg-blue-100 text-blue-700 px-2 rounded ml-2">Manual</span>' : ''}</div>
-                                       <div><button data-id="${v.id}" class="view-visit bg-blue-500 text-white px-3 py-1 rounded mr-2">Ver</button>
-                                       <button data-id="${v.id}" class="del-visit bg-red-500 text-white px-3 py-1 rounded">X</button></div>`;
-                        historyList.appendChild(d);
+            async function callGroq(type, data) {
+                const key = localStorage.getItem('groqApiKey');
+                if (!key) throw new Error("Chave Groq em falta");
+                if (type === 'transcribe') {
+                    const formData = new FormData();
+                    formData.append('file', data, 'recording.webm'); 
+                    formData.append('model', 'whisper-large-v3');
+                    formData.append('language', 'pt');
+                    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${key}` }, body: formData
                     });
-                };
-            }
-            
-            // --- Modal e Transcrição ---
-            historyList.addEventListener('click', e => {
-                if(e.target.classList.contains('view-visit')) openVisit(e.target.dataset.id);
-                if(e.target.classList.contains('del-visit')) { deleteConfig = {id: parseInt(e.target.dataset.id), store: VISIT_STORE}; deleteConfirmModal.style.display='flex'; }
-            });
-
-            function openVisit(id) {
-                db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).get(parseInt(id)).onsuccess = (e) => {
-                    const v = e.target.result;
-                    currentVisitIdToExport = v.id; currentVisitDataToExport = v;
-                    modalClientName.textContent = v.clientName;
-                    modalDate.textContent = new Date(v.dateTime).toLocaleString();
-                    modalTranscriptTextarea.value = v.transcript || '';
-                    
-                    // Reset UI de IA
-                    modalAiSummarySection.style.display = 'none';
-                    modalAiTasksSection.style.display = 'none';
-                    
-                    // Configuração de Áudio e Botões de IA
-                    const aiButtons = visitModal.querySelectorAll('.ai-button');
-                    aiButtons.forEach(btn => btn.style.display = userApiKey ? 'flex' : 'none');
-
-                    if (v.audioBlob) {
-                        modalAudioSection.style.display = 'block';
-                        modalAudioPlayer.src = URL.createObjectURL(v.audioBlob);
-                        modalAiTranscribeAudioButton.style.display = userApiKey ? 'flex' : 'none';
-                    } else {
-                        modalAudioSection.style.display = 'none';
-                        modalAiTranscribeAudioButton.style.display = 'none';
+                    if (!res.ok) {
+                        const errJson = await res.json().catch(() => ({error: {message: "Unknown error"}}));
+                        throw new Error(errJson.error?.message || await res.text());
                     }
-                    
-                    visitModal.style.display = 'flex';
-                };
+                    return (await res.json()).text;
+                } else {
+                    const prompt = type === 'summarize' ? `Resuma: ${data}` : `Tarefas: ${data}`;
+                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: "llama-3.3-70b-versatile",
+                            messages: [{ role: "user", content: prompt }]
+                        })
+                    });
+                    if (!res.ok) throw new Error(await res.text());
+                    return (await res.json()).choices[0].message.content;
+                }
             }
 
-            // Transcrição de Áudio
-            modalAiTranscribeAudioButton.addEventListener('click', async function() {
-                if (!currentVisitDataToExport || !currentVisitDataToExport.audioBlob) return;
-                
-                const audioBase64Raw = await blobToBase64(currentVisitDataToExport.audioBlob);
-                // Formato data:audio/xxx;base64,YYYYY -> extrair YYYYY e mimeType
-                const base64Data = audioBase64Raw.split(',')[1];
-                const mimeType = audioBase64Raw.split(';')[0].split(':')[1];
-
-                const prompt = "Por favor, transcreva este áudio fielmente para português. Identifique diferentes oradores se possível (ex: Orador 1, Orador 2). Formate o texto de forma clara.";
-                
-                const transcription = await callGeminiApi(prompt, this, { mimeType: mimeType, data: base64Data });
-                
-                if (transcription) {
-                    modalTranscriptTextarea.value = transcription;
-                    modalStatusMessage.textContent = "Transcrição concluída!";
-                    // Salvar
-                    const tr = db.transaction([VISIT_STORE],'readwrite');
-                    const store = tr.objectStore(VISIT_STORE);
-                    store.get(currentVisitIdToExport).onsuccess = (e) => {
-                        let d = e.target.result; d.transcript = transcription; store.put(d);
-                    };
-                }
-            });
+            function initDB() { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onsuccess = e => { db = e.target.result; loadAll(); }; r.onupgradeneeded = e => { const d = e.target.result; if(!d.objectStoreNames.contains(VISIT_STORE)) d.createObjectStore(VISIT_STORE,{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains(SCHEDULE_STORE)) d.createObjectStore(SCHEDULE_STORE,{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains(TASK_STORE)) d.createObjectStore(TASK_STORE,{keyPath:'id',autoIncrement:true}); }; }
+            function loadAll() { loadTasks(); loadSch(); loadHistory(); loadSettings(); }
             
-            // Resumo e Tarefas
-            modalAiSummarizeButton.addEventListener('click', async function() {
-                const t = modalTranscriptTextarea.value; if(!t) return;
-                const s = await callGeminiApi(`Resuma esta reunião em pontos-chave profissionais:\n"${t}"`, this);
-                if(s){ modalAiSummarySection.style.display='block'; aiSummaryResult.value=s; }
-            });
-            
-            modalAiExtractButton.addEventListener('click', async function() {
-                const t = modalTranscriptTextarea.value; if(!t) return;
-                const s = await callGeminiApi(`Extraia uma lista de tarefas/ações desta reunião (um por linha):\n"${t}"`, this);
-                if(s){ modalAiTasksSection.style.display='block'; aiTasksResult.value=s; }
-            });
-            
-            addAiTasksButton.addEventListener('click', () => {
-                const l = aiTasksResult.value.split('\n').map(t=>t.trim().replace(/^- /,'')).filter(t=>t);
-                l.forEach(t=>saveTask(t));
-                modalStatusMessage.textContent = `${l.length} tarefas adicionadas!`;
-            });
-
-            // Listeners Genéricos
-            modalCloseButton.addEventListener('click', () => visitModal.style.display='none');
-            deleteConfirmCancel.addEventListener('click', () => deleteConfirmModal.style.display='none');
-            deleteConfirmOk.addEventListener('click', () => {
-                db.transaction([deleteConfig.store],'readwrite').objectStore(deleteConfig.store).delete(deleteConfig.id).onsuccess = () => {
-                    deleteConfirmModal.style.display='none'; loadHistory(); loadScheduledVisits();
+            async function exportData() {
+                if(!db)return;
+                try {
+                    els.backupStatus.textContent = "A exportar...";
+                    const t=await promisify(db.transaction([TASK_STORE],'readonly').objectStore(TASK_STORE).getAll());
+                    const s=await promisify(db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll());
+                    const v=await promisify(db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll());
+                    const v2=[];
+                    for(const i of v){ if(i.audioBlob) i.audioBase64=await blobToBase64(i.audioBlob); delete i.audioBlob; v2.push(i); }
+                    const backup = { tasks:t, scheduledVisits:s, visits:v2, settings:{ geminiApiKey: els.apiKeyInput.value, groqApiKey: els.groqKeyInput.value, provider: els.providerSelect.value, model: els.modelInput.value } };
+                    const url = URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));
+                    const l = document.createElement('a'); l.href=url; l.download=`backup.json`; l.click();
+                    els.backupStatus.textContent = "OK!";
+                } catch(e) { alert("Erro: "+e); }
+            }
+            function importData(e) {
+                const f=e.target.files[0]; if(!f)return;
+                const r=new FileReader();
+                r.onload=async(ev)=>{
+                    const d=JSON.parse(ev.target.result);
+                    if(confirm("Restaurar backup?")) {
+                        const tr=db.transaction([TASK_STORE,SCHEDULE_STORE,VISIT_STORE],'readwrite');
+                        await promisify(tr.objectStore(TASK_STORE).clear()); await promisify(tr.objectStore(SCHEDULE_STORE).clear()); await promisify(tr.objectStore(VISIT_STORE).clear());
+                        d.tasks?.forEach(i=>tr.objectStore(TASK_STORE).add(i));
+                        d.scheduledVisits?.forEach(i=>tr.objectStore(SCHEDULE_STORE).add(i));
+                        d.visits?.forEach(i=>{ if(i.audioBase64) i.audioBlob=base64ToBlob(i.audioBase64); delete i.id; delete i.audioBase64; tr.objectStore(VISIT_STORE).add(i); });
+                        if(d.settings) { 
+                            if(d.settings.geminiApiKey) localStorage.setItem('geminiApiKey', d.settings.geminiApiKey);
+                            if(d.settings.model) localStorage.setItem('geminiModel', d.settings.model);
+                            if(d.settings.groqApiKey) localStorage.setItem('groqApiKey', d.settings.groqApiKey);
+                        }
+                        tr.oncomplete=()=>{ alert("Restaurado!"); window.location.reload(); };
+                    }
                 };
-            });
-            saveApiKeyButton.addEventListener('click', () => {
-                const k = geminiApiKeyInput.value.trim();
-                if(k) localStorage.setItem('geminiApiKey', k);
-                else localStorage.removeItem('geminiApiKey');
-                loadApiKey(); settingsModal.style.display='none';
-            });
-            settingsButton.addEventListener('click', () => settingsModal.style.display='flex');
-            settingsModalCloseButton.addEventListener('click', () => settingsModal.style.display='none');
+                r.readAsText(f);
+            }
+            els.exportBtn.onclick=exportData; els.importInput.onchange=importData;
+
+            function saveTask(t){const tr=db.transaction([TASK_STORE],'readwrite');tr.objectStore(TASK_STORE).add({text:t,completed:false});tr.oncomplete=loadTasks;}
+            function loadTasks(){db.transaction([TASK_STORE],'readonly').objectStore(TASK_STORE).getAll().onsuccess=e=>{els.taskList.innerHTML='';e.target.result.sort((a,b)=>a.completed-b.completed).forEach(t=>{els.taskList.innerHTML+=`<div class="flex justify-between p-2 border mb-1 bg-white rounded"><span onclick="togT(${t.id})" class="flex-1 cursor-pointer ${t.completed?'line-through text-gray-400':''}">${t.text}</span><button onclick="delT(${t.id})" class="text-red-500 px-2">x</button></div>`});els.tasksLoading.textContent=e.target.result.length?'':'Sem tarefas.';}}
+            window.togT=id=>{const s=db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE);s.get(id).onsuccess=e=>{let d=e.target.result;d.completed=!d.completed;s.put(d).onsuccess=loadTasks;}}
+            window.delT=id=>{db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE).delete(id).onsuccess=loadTasks;}
+            els.addTaskBtn.onclick=()=>{if(els.taskInput.value){saveTask(els.taskInput.value);els.taskInput.value='';}};
+
+            function saveSch(){if(!els.schName.value)return;db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).add({clientName:els.schName.value,contactPerson:els.schContact.value,email:els.schEmail.value,status:'scheduled'}).onsuccess=()=>{loadSch();els.schName.value='';};}
+            function loadSch(){db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll().onsuccess=e=>{els.schList.innerHTML='';e.target.result.filter(s=>s.status==='scheduled').forEach(s=>{els.schList.innerHTML+=`<div class="flex justify-between p-3 bg-white border mb-2 rounded"><div><b>${s.clientName}</b><br>${s.contactPerson}</div><div><button onclick="loadS(${s.id})" class="bg-green-100 text-green-800 px-2 rounded mr-1">Ir</button><button onclick="delS(${s.id})" class="bg-red-100 text-red-800 px-2 rounded">x</button></div></div>`;});els.schLoading.textContent='';}}
+            window.loadS=id=>{db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).get(id).onsuccess=e=>{const d=e.target.result;els.cName.value=d.clientName;els.cContact.value=d.contactPerson;els.cEmail.value=d.email;currentScheduledVisitId=d.id;els.status.textContent='Agendamento carregado.';}}
+            window.delS=id=>{db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).delete(id).onsuccess=loadSch;}
+            els.saveSchBtn.onclick=saveSch;
+
+            const reqWL=async()=>{try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}}; const relWL=async()=>{if(wakeLock)await wakeLock.release();wakeLock=null;};
+            els.startBtn.onclick=async()=>{if(!els.cName.value){alert('Nome cliente?');return;}try{audioStream=await navigator.mediaDevices.getUserMedia({audio:true});isRecording=true;audioChunks=[];startTime=Date.now();timerInterval=setInterval(()=>{els.timer.textContent=new Date(Date.now()-startTime).toISOString().slice(11,19);},1000);await reqWL();mediaRecorder=new MediaRecorder(audioStream);mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(audioChunks,{type:'audio/webm'});saveVisit({clientName:els.cName.value,contactPerson:els.cContact.value,email:els.cEmail.value,dateTime:new Date().toISOString(),transcript:'',audioBlob:blob});audioStream.getTracks().forEach(t=>t.stop());};mediaRecorder.start();els.startBtn.classList.add('hidden');els.stopBtn.disabled=false;els.stopBtn.classList.remove('hidden');els.manualBtn.disabled=true;}catch(e){alert('Erro Mic: '+e);}};
+            els.stopBtn.onclick=async()=>{if(!isRecording)return;isRecording=false;clearInterval(timerInterval);await relWL();mediaRecorder.stop();els.startBtn.classList.remove('hidden');els.stopBtn.classList.add('hidden');els.manualBtn.disabled=false;els.status.textContent='Guardado.';};
+            els.manualBtn.onclick=()=>{if(!els.cName.value){alert('Nome cliente?');return;}saveVisit({clientName:els.cName.value,contactPerson:els.cContact.value,email:els.cEmail.value,dateTime:new Date().toISOString(),transcript:'Nota Manual',audioBlob:null});};
+            els.clearBtn.onclick=()=>{isRecording=false;clearInterval(timerInterval);relWL();els.cName.value='';els.timer.textContent='00:00:00';els.startBtn.classList.remove('hidden');els.stopBtn.classList.add('hidden');};
+
+            function saveVisit(d){db.transaction([VISIT_STORE],'readwrite').objectStore(VISIT_STORE).add(d).onsuccess=()=>{loadHistory();if(currentScheduledVisitId){db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).get(currentScheduledVisitId).onsuccess=e=>{let s=e.target.result;s.status='completed';db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).put(s).onsuccess=loadSch;currentScheduledVisitId=null;}};els.cName.value='';els.timer.textContent='00:00:00';};}
+            function loadHistory(){db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll().onsuccess=e=>{els.histList.innerHTML='';e.target.result.sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).forEach(v=>{els.histList.innerHTML+=`<div class="p-3 bg-white border rounded mb-2 flex justify-between items-center"><div><b>${v.clientName}</b><br><span class="text-xs text-gray-500">${new Date(v.dateTime).toLocaleDateString()}</span>${!v.audioBlob?'<span class="text-[10px] bg-blue-100 text-blue-800 px-1 rounded ml-2">Manual</span>':''}</div><div><button onclick="openV(${v.id})" class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded mr-2">Ver</button><button onclick="askDel(${v.id})" class="text-red-400 px-2">x</button></div></div>`;});els.histLoading.textContent='';}}
             
-            // Listener Privacidade
-            privacyButton.addEventListener('click', () => privacyOverlay.style.display='flex');
-            privacyOverlay.addEventListener('dblclick', () => privacyOverlay.style.display='none');
-            
-            // Listener Wake Lock Visibility
-            document.addEventListener('visibilitychange', async () => {
-                if (wakeLock && document.visibilityState === 'visible' && isRecording) {
-                    await requestWakeLock();
+            window.openV=(id)=>{db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).get(id).onsuccess=e=>{const v=e.target.result;currentVisitIdToExport=v.id;currentVisitDataToExport=v;els.vName.textContent=v.clientName;els.vText.value=v.transcript||'';els.aiResArea.classList.add('hidden');if(v.audioBlob){els.vAudioSec.classList.remove('hidden');els.vAudio.src=URL.createObjectURL(v.audioBlob);}else{els.vAudioSec.classList.add('hidden');}els.vModal.style.display='flex';}}
+            window.askDel=(id)=>{deleteConfig={id:id,store:VISIT_STORE};els.delModal.style.display='flex';}
+            els.delCancel.onclick=()=>{els.delModal.style.display='none';};els.delOk.onclick=()=>{db.transaction([deleteConfig.store],'readwrite').objectStore(deleteConfig.store).delete(deleteConfig.id).onsuccess=()=>{els.delModal.style.display='none';loadAll();}};
+            els.vClose.onclick=()=>{els.vModal.style.display='none';};
+            els.settingsBtn.onclick=()=>{els.settingsModal.style.display='flex';};els.settingsClose.onclick=()=>{els.settingsModal.style.display='none';};
+            els.privacyBtn.onclick=()=>{els.privacyOverlay.style.display='flex';};els.privacyOverlay.ondblclick=()=>{els.privacyOverlay.style.display='none';};
+            els.forceUpdateBtn.onclick=()=>{if(confirm("Reset?")){if('serviceWorker'in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));caches.keys().then(ns=>ns.forEach(n=>caches.delete(n)));location.reload(true);}};
+
+            // Transcribe Button
+            els.transcribeBtn.onclick = async () => {
+                if(!currentVisitDataToExport?.audioBlob) return;
+                const text = await callAI('transcribe', currentVisitDataToExport.audioBlob);
+                if(text) {
+                    els.vText.value = text;
+                    els.vMsg.textContent = "Sucesso!"; els.vMsg.className = 'text-green-600';
+                    const tr = db.transaction([VISIT_STORE],'readwrite'); const st = tr.objectStore(VISIT_STORE);
+                    st.get(currentVisitIdToExport).onsuccess = e => { let d=e.target.result; d.transcript=text; st.put(d); };
                 }
-            });
+            };
 
-            // Listeners Principais
-            startButton.addEventListener('click', startRecording);
-            stopButton.addEventListener('click', stopAndSave);
-            saveManualButton.addEventListener('click', saveManual);
-            clearButton.addEventListener('click', () => { isRecording=false; clearInterval(timerInterval); releaseWakeLock(); clientNameInput.value=''; timerDisplay.textContent='00:00:00'; });
-            saveScheduleButton.addEventListener('click', saveSchedule);
-            addTaskButton.addEventListener('click', () => { if(taskInput.value) { saveTask(taskInput.value); taskInput.value=''; }});
-            exportDataButton.addEventListener('click', exportData);
-            importDataInput.addEventListener('change', importData);
-            modalSaveChangesButton.addEventListener('click', () => {
-                const t = modalTranscriptTextarea.value;
-                const tr = db.transaction([VISIT_STORE],'readwrite');
-                tr.objectStore(VISIT_STORE).get(currentVisitIdToExport).onsuccess=(e)=>{let d=e.target.result; d.transcript=t; tr.objectStore(VISIT_STORE).put(d); modalStatusMessage.textContent='Salvo!';};
-            });
-            modalExportButton.addEventListener('click', () => {
-                if(!currentVisitDataToExport) return;
-                const v = currentVisitDataToExport;
-                const txt = `RELATÓRIO\nCliente: ${v.clientName}\nData: ${new Date(v.dateTime).toLocaleString()}\n\nRESUMO:\n${aiSummaryResult.value}\n\nTAREFAS:\n${aiTasksResult.value}\n\nTRANSCRIÇÃO:\n${modalTranscriptTextarea.value}`;
-                const b = new Blob([txt], {type:'text/plain'});
-                const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `relatorio_${v.clientName}.txt`; l.click();
-            });
+            els.sumBtn.onclick = async () => { const t=await callAI('summarize', els.vText.value); if(t){ els.aiResArea.classList.remove('hidden'); els.aiResText.value=t; } };
+            els.extBtn.onclick = async () => { const t=await callAI('extract', els.vText.value); if(t){ els.aiResArea.classList.remove('hidden'); els.aiResText.value=t; } };
+            els.vSave.onclick = () => { const tr = db.transaction([VISIT_STORE],'readwrite'); const st = tr.objectStore(VISIT_STORE); st.get(currentVisitIdToExport).onsuccess = e => { let d=e.target.result; d.transcript=els.vText.value; st.put(d); els.vMsg.textContent='Salvo.'; }; };
+            els.vExport.onclick = () => { if(!currentVisitDataToExport)return; const v=currentVisitDataToExport; const b=new Blob([`CLIENTE: ${v.clientName}\n\n${els.vText.value}`],{type:'text/plain'}); const l=document.createElement('a'); l.href=URL.createObjectURL(b); l.download='relatorio.txt'; l.click(); };
 
-            // Init
             initDB();
         });
     </script>
