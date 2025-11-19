@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente Externo</title> <!-- Nome Atualizado -->
+    <title>Assistente Externo</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=AE"> <!-- AE de Assistente Externo -->
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=AE">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -17,18 +17,25 @@
         .task-completed { text-decoration: line-through; color: #9ca3af; }
         .input-field { @apply border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500; }
         .label-disabled { @apply opacity-50 cursor-not-allowed; }
-        #privacy-overlay { position: fixed; inset: 0; background-color: #000000; z-index: 9999; display: none; align-items: center; justify-content: center; text-align: center; color: #333; font-size: 1rem; cursor: pointer; touch-action: manipulation; }
+        /* Overlay de Privacidade (v27 - Z-Index Máximo e Touch Action) */
+        #privacy-overlay { 
+            position: fixed; inset: 0; background-color: #000000; 
+            z-index: 99999; display: none; align-items: center; justify-content: center; 
+            text-align: center; color: #333; font-size: 1rem; cursor: pointer; 
+            touch-action: manipulation; /* Impede zoom duplo toque do browser */
+            user-select: none; -webkit-user-select: none;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body class="min-h-screen flex justify-center p-0 sm:p-4">
     <div class="bg-white sm:rounded-2xl shadow-xl w-full max-w-5xl mx-auto relative flex flex-col min-h-screen sm:min-h-0 overflow-hidden">
         
-        <!-- Cabeçalho v25 -->
+        <!-- Cabeçalho v27 -->
         <header class="flex justify-between items-center p-6 bg-indigo-600 text-white shadow-md">
             <div class="flex-1">
                 <h1 class="text-2xl font-bold tracking-tight">Assistente Externo</h1>
-                <p class="text-indigo-200 text-xs font-medium mt-0.5 opacity-90">v25 • By. m.almeida</p>
+                <p class="text-indigo-200 text-xs font-medium mt-0.5 opacity-90">v27 • IA Pro • By. m.almeida</p>
             </div>
             <div class="flex gap-4">
                 <button id="privacy-button" class="text-white hover:text-indigo-200 transition flex flex-col items-center">
@@ -87,21 +94,8 @@
                     <option value="groq">Groq Cloud (Grátis/Beta)</option>
                 </select>
             </div>
-            
-            <div id="google-settings">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Chave API Gemini</label>
-                <input type="password" id="gemini-api-key-input" class="w-full input-field px-3 py-2" placeholder="Cole a chave aqui">
-                <label class="block text-sm font-medium text-gray-700 mt-3 mb-1">Modelo Gemini (Nome Técnico)</label>
-                <input type="text" id="gemini-model-input" class="w-full input-field px-3 py-2 bg-gray-50 font-mono text-sm" value="gemini-1.5-flash">
-                <p class="text-xs text-gray-500 mt-1">Padrão: gemini-1.5-flash.</p>
-            </div>
-
-            <div id="groq-settings" class="hidden">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Chave API Groq</label>
-                <input type="password" id="groq-api-key-input" class="w-full input-field px-3 py-2" placeholder="gsk_...">
-                <p class="text-xs text-gray-500 mt-1">Obtenha em console.groq.com. Usa Whisper Large v3.</p>
-            </div>
-
+            <div id="google-settings"><label class="block text-sm font-medium text-gray-700 mb-1">Chave API Gemini</label><input type="password" id="gemini-api-key-input" class="w-full input-field px-3 py-2" placeholder="Cole a chave aqui"><label class="block text-sm font-medium text-gray-700 mt-3 mb-1">Modelo Gemini</label><input type="text" id="gemini-model-input" class="w-full input-field px-3 py-2 bg-gray-50 font-mono text-sm" value="gemini-2.0-flash-exp"><p class="text-xs text-gray-500 mt-1">Recomendado: gemini-2.0-flash-exp</p></div>
+            <div id="groq-settings" class="hidden"><label class="block text-sm font-medium text-gray-700 mb-1">Chave API Groq</label><input type="password" id="groq-api-key-input" class="w-full input-field px-3 py-2" placeholder="gsk_..."><p class="text-xs text-gray-500 mt-1">Usa Whisper Large v3 + Llama 3</p></div>
             <div class="pt-4 border-t"><button id="export-data-button" class="w-full bg-blue-100 text-blue-700 font-bold py-2 rounded mb-2">Exportar Dados</button><input type="file" id="import-data-input" class="hidden" accept=".json"><label for="import-data-input" class="block w-full text-center bg-green-100 text-green-700 font-bold py-2 rounded cursor-pointer">Importar Dados</label></div>
             <div class="pt-2"><button id="force-update-button" class="w-full border border-red-300 text-red-500 font-bold py-2 rounded text-xs">Forçar Atualização (Reset)</button></div>
         </div>
@@ -112,13 +106,15 @@
         <div class="flex justify-between items-center p-4 border-b"><h3 id="modal-title" class="text-lg font-bold text-gray-800">Detalhes</h3><button id="modal-close-button" class="text-gray-500 text-xl">✕</button></div>
         <div class="p-6 space-y-4 overflow-y-auto flex-grow">
             <div><span class="text-xs text-gray-500 uppercase">Cliente</span><p id="modal-client-name" class="font-bold text-lg text-gray-900"></p></div>
-            <div id="modal-audio-section" class="bg-gray-50 p-3 rounded-lg border"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 uppercase">Áudio</span></div><audio id="modalAudioPlayer" controls class="w-full mb-3 h-10"></audio><button id="modal-ai-transcribe-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2 transition">✨ Transcrever (Auto IA)</button></div>
-            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Transcrição</label><textarea id="modalTranscriptTextarea" class="w-full p-3 bg-white border border-gray-300 rounded-lg" rows="6"></textarea></div>
+            <div id="modal-audio-section" class="bg-gray-50 p-3 rounded-lg border"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 uppercase">Áudio</span></div><audio id="modalAudioPlayer" controls class="w-full mb-3 h-10"></audio><button id="modal-ai-transcribe-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2 transition">✨ Transcrever, Resumir e Tarefas</button></div>
+            
+            <!-- Blocos Editáveis v26 -->
+            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Transcrição (Corrigida)</label><textarea id="modalTranscriptTextarea" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" rows="6"></textarea></div>
             <div id="modal-status-message" class="text-xs font-bold h-4"></div>
-            <div class="flex gap-2"><button id="modal-ai-summarize-button" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded">Resumir</button><button id="modal-ai-extract-button" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded">Tarefas</button></div>
-            <div id="modal-ai-result-area" class="hidden"><textarea id="ai-result-text" class="w-full p-3 bg-indigo-50 border border-indigo-100 rounded-lg mt-2" rows="4" readonly></textarea></div>
+            <div id="modal-ai-summary-section"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Resumo</label><textarea id="ai-summary-result" class="w-full p-3 bg-white border border-gray-300 rounded-lg" rows="4"></textarea></div>
+            <div id="modal-ai-tasks-section"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tarefas Identificadas</label><textarea id="ai-tasks-result" class="w-full p-3 bg-white border border-gray-300 rounded-lg" rows="4"></textarea><button id="add-ai-tasks-button" class="mt-2 w-full bg-indigo-100 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-200">Adicionar à Lista de Tarefas do Dia</button></div>
         </div>
-        <div class="p-4 bg-gray-50 border-t flex justify-end gap-2"><button id="modal-save-changes-button" class="bg-green-600 text-white font-bold py-2 px-4 rounded">Salvar</button><button id="modal-export-button" class="bg-purple-600 text-white font-bold py-2 px-4 rounded">Exportar</button></div>
+        <div class="p-4 bg-gray-50 border-t flex justify-end gap-2"><button id="modal-save-changes-button" class="bg-green-600 text-white font-bold py-2 px-4 rounded">Salvar Tudo</button><button id="modal-export-button" class="bg-purple-600 text-white font-bold py-2 px-4 rounded">Exportar</button></div>
     </div></div>
 
     <div id="delete-confirm-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-xl shadow-xl w-full max-w-xs p-6 text-center"><h3 class="text-lg font-bold text-gray-800 mb-2">Apagar?</h3><div class="flex justify-center gap-3 mt-4"><button id="delete-confirm-cancel" class="flex-1 py-2 bg-gray-200 text-gray-700 font-bold rounded">Não</button><button id="delete-confirm-ok" class="flex-1 py-2 bg-red-600 text-white font-bold rounded">Sim</button></div></div></div>
@@ -129,6 +125,7 @@
             let db, currentVisitIdToExport=null, currentVisitDataToExport=null, deleteConfig={id:null,store:null};
             const DB_NAME="VisitAssistantDB", DB_VERSION=4, VISIT_STORE="visits", SCHEDULE_STORE="scheduledVisits", TASK_STORE="tasks";
 
+            // UI References
             const els={
                 settingsBtn: document.getElementById('settings-button'), settingsModal: document.getElementById('settings-modal'), settingsClose: document.getElementById('settings-modal-close-button'), saveSettingsBtn: document.getElementById('save-settings-button'),
                 providerSelect: document.getElementById('ai-provider-select'), googleSettings: document.getElementById('google-settings'), groqSettings: document.getElementById('groq-settings'),
@@ -140,7 +137,7 @@
                 startBtn: document.getElementById('startButton'), stopBtn: document.getElementById('stopButton'), clearBtn: document.getElementById('clearButton'), manualBtn: document.getElementById('saveManualButton'), status: document.getElementById('status'), timer: document.getElementById('timerDisplay'), cName: document.getElementById('clientNameInput'), cContact: document.getElementById('contactPersonInput'), cEmail: document.getElementById('emailInput'),
                 histList: document.getElementById('history-list'), histLoading: document.getElementById('history-loading'),
                 vModal: document.getElementById('visit-modal'), vClose: document.getElementById('modal-close-button'), vTitle: document.getElementById('modal-title'), vName: document.getElementById('modal-client-name'), vAudioSec: document.getElementById('modal-audio-section'), vAudio: document.getElementById('modalAudioPlayer'), vText: document.getElementById('modalTranscriptTextarea'), vSave: document.getElementById('modal-save-changes-button'), vExport: document.getElementById('modal-export-button'), vMsg: document.getElementById('modal-status-message'),
-                transcribeBtn: document.getElementById('modal-ai-transcribe-button'), sumBtn: document.getElementById('modal-ai-summarize-button'), extBtn: document.getElementById('modal-ai-extract-button'), aiResArea: document.getElementById('modal-ai-result-area'), aiResText: document.getElementById('ai-result-text'),
+                transcribeBtn: document.getElementById('modal-ai-transcribe-button'), aiSumRes: document.getElementById('ai-summary-result'), aiTaskRes: document.getElementById('ai-tasks-result'), aiAddTasks: document.getElementById('add-ai-tasks-button'),
                 delModal: document.getElementById('delete-confirm-modal'), delCancel: document.getElementById('delete-confirm-cancel'), delOk: document.getElementById('delete-confirm-ok')
             };
 
@@ -151,14 +148,14 @@
 
             function loadSettings(){
                 els.apiKeyInput.value = localStorage.getItem('geminiApiKey') || '';
-                els.modelInput.value = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
+                els.modelInput.value = localStorage.getItem('geminiModel') || 'gemini-2.0-flash-exp';
                 els.groqKeyInput.value = localStorage.getItem('groqApiKey') || '';
                 els.providerSelect.value = localStorage.getItem('aiProvider') || 'google';
                 toggleProviderUI();
             }
             function saveSettings(){
                 localStorage.setItem('geminiApiKey', els.apiKeyInput.value.trim());
-                localStorage.setItem('geminiModel', els.modelInput.value.trim() || 'gemini-1.5-flash');
+                localStorage.setItem('geminiModel', els.modelInput.value.trim() || 'gemini-2.0-flash-exp');
                 localStorage.setItem('groqApiKey', els.groqKeyInput.value.trim());
                 localStorage.setItem('aiProvider', els.providerSelect.value);
                 els.settingsModal.style.display='none';
@@ -171,77 +168,101 @@
             els.providerSelect.onchange = toggleProviderUI;
             els.saveSettingsBtn.onclick = saveSettings;
 
-            async function callAI(type, data) {
+            // AI Logic (Smart All-in-One v26)
+            async function callSmartAI(data) {
                 const provider = localStorage.getItem('aiProvider') || 'google';
-                els.vMsg.textContent = `A processar com ${provider}...`;
+                els.vMsg.textContent = `A analisar com ${provider}...`;
                 try {
-                    if (provider === 'google') return await callGoogle(type, data);
-                    if (provider === 'groq') return await callGroq(type, data);
+                    let result;
+                    if (provider === 'google') result = await smartGoogle(data);
+                    if (provider === 'groq') result = await smartGroq(data);
+                    return parseAIResult(result);
                 } catch (e) {
-                    els.vMsg.textContent = `Erro ${provider}: ${e.message}`;
-                    throw e;
+                    els.vMsg.textContent = `Erro: ${e.message}`;
+                    return null;
                 }
             }
 
-            async function callGoogle(type, data) {
+            function parseAIResult(text) {
+                // Tenta extrair secções
+                const trans = text.match(/---TRANSCRICAO---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || text;
+                const sum = text.match(/---RESUMO---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || "";
+                const tasks = text.match(/---TAREFAS---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || "";
+                return { trans, sum, tasks };
+            }
+
+            async function smartGoogle(data) {
                 const key = localStorage.getItem('geminiApiKey');
-                const model = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
-                if (!key) throw new Error("Chave Google em falta");
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-                let prompt = "";
-                const parts = [];
-                if (type === 'transcribe') {
-                    prompt = "Transcreva o áudio fielmente em Português.";
-                    const b64 = await blobToBase64(data); 
-                    parts.push({ text: prompt });
-                    parts.push({ inlineData: { mimeType: b64.split(';')[0].split(':')[1], data: b64.split(',')[1] } });
-                } else {
-                    prompt = type === 'summarize' ? `Resuma:\n"${data}"` : `Extraia tarefas:\n"${data}"`;
-                    parts.push({ text: prompt });
-                }
-                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: parts }] }) });
-                if (!res.ok) {
-                    const err = await res.json().catch(()=>{});
-                    throw new Error(err?.error?.message || res.status);
-                }
+                const model = localStorage.getItem('geminiModel') || 'gemini-2.0-flash-exp';
+                if (!key) throw new Error("Falta chave Google");
+                
+                const prompt = `És uma secretária eficiente. Ouve o áudio e gera: 
+1. Uma transcrição corrigida e organizada.
+2. Um resumo executivo.
+3. Uma lista de tarefas práticas.
+Responda estritamente neste formato:
+---TRANSCRICAO---
+(Texto aqui)
+---RESUMO---
+(Texto aqui)
+---TAREFAS---
+(Texto aqui)`;
+
+                const b64 = await blobToBase64(data);
+                const parts = [
+                    { text: prompt },
+                    { inlineData: { mimeType: b64.split(';')[0].split(':')[1], data: b64.split(',')[1] } }
+                ];
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, { 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ contents: [{ parts: parts }] }) 
+                });
+                
+                if (!res.ok) throw new Error((await res.json()).error?.message || res.status);
                 const json = await res.json();
                 return json.candidates[0].content.parts[0].text;
             }
 
-            async function callGroq(type, data) {
+            async function smartGroq(data) {
                 const key = localStorage.getItem('groqApiKey');
-                if (!key) throw new Error("Chave Groq em falta");
-                if (type === 'transcribe') {
-                    const formData = new FormData();
-                    formData.append('file', data, 'recording.webm'); 
-                    formData.append('model', 'whisper-large-v3');
-                    formData.append('language', 'pt');
-                    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-                        method: 'POST', headers: { 'Authorization': `Bearer ${key}` }, body: formData
-                    });
-                    if (!res.ok) {
-                        const errJson = await res.json().catch(() => ({error: {message: "Unknown error"}}));
-                        throw new Error(errJson.error?.message || await res.text());
-                    }
-                    return (await res.json()).text;
-                } else {
-                    const prompt = type === 'summarize' ? `Resuma: ${data}` : `Tarefas: ${data}`;
-                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            model: "llama-3.3-70b-versatile",
-                            messages: [{ role: "user", content: prompt }]
-                        })
-                    });
-                    if (!res.ok) throw new Error(await res.text());
-                    return (await res.json()).choices[0].message.content;
-                }
+                if (!key) throw new Error("Falta chave Groq");
+
+                // Passo 1: Transcrever (Whisper)
+                els.vMsg.textContent = "1/2 Transcrevendo...";
+                const formData = new FormData();
+                formData.append('file', data, 'rec.webm'); 
+                formData.append('model', 'whisper-large-v3');
+                formData.append('language', 'pt');
+                const resTrans = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { 'Authorization': `Bearer ${key}` }, body: formData });
+                if (!resTrans.ok) throw new Error(await resTrans.text());
+                const transcript = (await resTrans.json()).text;
+
+                // Passo 2: Organizar (Llama)
+                els.vMsg.textContent = "2/2 Organizando...";
+                const prompt = `Analise este texto bruto e formate-o. 
+Texto: "${transcript}"
+Responda estritamente neste formato:
+---TRANSCRICAO---
+(Texto corrigido e pontuado)
+---RESUMO---
+(Resumo em tópicos)
+---TAREFAS---
+(Lista de ações)`;
+
+                const resChat = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] })
+                });
+                if (!resChat.ok) throw new Error(await resChat.text());
+                return (await resChat.json()).choices[0].message.content;
             }
 
+            // DB Init
             function initDB() { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onsuccess = e => { db = e.target.result; loadAll(); }; r.onupgradeneeded = e => { const d = e.target.result; if(!d.objectStoreNames.contains(VISIT_STORE)) d.createObjectStore(VISIT_STORE,{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains(SCHEDULE_STORE)) d.createObjectStore(SCHEDULE_STORE,{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains(TASK_STORE)) d.createObjectStore(TASK_STORE,{keyPath:'id',autoIncrement:true}); }; }
             function loadAll() { loadTasks(); loadSch(); loadHistory(); loadSettings(); }
             
+            // Export/Import
             async function exportData() {
                 if(!db)return;
                 try {
@@ -280,18 +301,21 @@
             }
             els.exportBtn.onclick=exportData; els.importInput.onchange=importData;
 
+            // Task Logic
             function saveTask(t){const tr=db.transaction([TASK_STORE],'readwrite');tr.objectStore(TASK_STORE).add({text:t,completed:false});tr.oncomplete=loadTasks;}
             function loadTasks(){db.transaction([TASK_STORE],'readonly').objectStore(TASK_STORE).getAll().onsuccess=e=>{els.taskList.innerHTML='';e.target.result.sort((a,b)=>a.completed-b.completed).forEach(t=>{els.taskList.innerHTML+=`<div class="flex justify-between p-2 border mb-1 bg-white rounded"><span onclick="togT(${t.id})" class="flex-1 cursor-pointer ${t.completed?'line-through text-gray-400':''}">${t.text}</span><button onclick="delT(${t.id})" class="text-red-500 px-2">x</button></div>`});els.tasksLoading.textContent=e.target.result.length?'':'Sem tarefas.';}}
             window.togT=id=>{const s=db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE);s.get(id).onsuccess=e=>{let d=e.target.result;d.completed=!d.completed;s.put(d).onsuccess=loadTasks;}}
             window.delT=id=>{db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE).delete(id).onsuccess=loadTasks;}
             els.addTaskBtn.onclick=()=>{if(els.taskInput.value){saveTask(els.taskInput.value);els.taskInput.value='';}};
 
+            // Schedule Logic
             function saveSch(){if(!els.schName.value)return;db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).add({clientName:els.schName.value,contactPerson:els.schContact.value,email:els.schEmail.value,status:'scheduled'}).onsuccess=()=>{loadSch();els.schName.value='';};}
             function loadSch(){db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll().onsuccess=e=>{els.schList.innerHTML='';e.target.result.filter(s=>s.status==='scheduled').forEach(s=>{els.schList.innerHTML+=`<div class="flex justify-between p-3 bg-white border mb-2 rounded"><div><b>${s.clientName}</b><br>${s.contactPerson}</div><div><button onclick="loadS(${s.id})" class="bg-green-100 text-green-800 px-2 rounded mr-1">Ir</button><button onclick="delS(${s.id})" class="bg-red-100 text-red-800 px-2 rounded">x</button></div></div>`;});els.schLoading.textContent='';}}
             window.loadS=id=>{db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).get(id).onsuccess=e=>{const d=e.target.result;els.cName.value=d.clientName;els.cContact.value=d.contactPerson;els.cEmail.value=d.email;currentScheduledVisitId=d.id;els.status.textContent='Agendamento carregado.';}}
             window.delS=id=>{db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).delete(id).onsuccess=loadSch;}
             els.saveSchBtn.onclick=saveSch;
 
+            // Recorder
             const reqWL=async()=>{try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}}; const relWL=async()=>{if(wakeLock)await wakeLock.release();wakeLock=null;};
             els.startBtn.onclick=async()=>{if(!els.cName.value){alert('Nome cliente?');return;}try{audioStream=await navigator.mediaDevices.getUserMedia({audio:true});isRecording=true;audioChunks=[];startTime=Date.now();timerInterval=setInterval(()=>{els.timer.textContent=new Date(Date.now()-startTime).toISOString().slice(11,19);},1000);await reqWL();mediaRecorder=new MediaRecorder(audioStream);mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(audioChunks,{type:'audio/webm'});saveVisit({clientName:els.cName.value,contactPerson:els.cContact.value,email:els.cEmail.value,dateTime:new Date().toISOString(),transcript:'',audioBlob:blob});audioStream.getTracks().forEach(t=>t.stop());};mediaRecorder.start();els.startBtn.classList.add('hidden');els.stopBtn.disabled=false;els.stopBtn.classList.remove('hidden');els.manualBtn.disabled=true;}catch(e){alert('Erro Mic: '+e);}};
             els.stopBtn.onclick=async()=>{if(!isRecording)return;isRecording=false;clearInterval(timerInterval);await relWL();mediaRecorder.stop();els.startBtn.classList.remove('hidden');els.stopBtn.classList.add('hidden');els.manualBtn.disabled=false;els.status.textContent='Guardado.';};
@@ -301,31 +325,85 @@
             function saveVisit(d){db.transaction([VISIT_STORE],'readwrite').objectStore(VISIT_STORE).add(d).onsuccess=()=>{loadHistory();if(currentScheduledVisitId){db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).get(currentScheduledVisitId).onsuccess=e=>{let s=e.target.result;s.status='completed';db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).put(s).onsuccess=loadSch;currentScheduledVisitId=null;}};els.cName.value='';els.timer.textContent='00:00:00';};}
             function loadHistory(){db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll().onsuccess=e=>{els.histList.innerHTML='';e.target.result.sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).forEach(v=>{els.histList.innerHTML+=`<div class="p-3 bg-white border rounded mb-2 flex justify-between items-center"><div><b>${v.clientName}</b><br><span class="text-xs text-gray-500">${new Date(v.dateTime).toLocaleDateString()}</span>${!v.audioBlob?'<span class="text-[10px] bg-blue-100 text-blue-800 px-1 rounded ml-2">Manual</span>':''}</div><div><button onclick="openV(${v.id})" class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded mr-2">Ver</button><button onclick="askDel(${v.id})" class="text-red-400 px-2">x</button></div></div>`;});els.histLoading.textContent='';}}
             
-            window.openV=(id)=>{db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).get(id).onsuccess=e=>{const v=e.target.result;currentVisitIdToExport=v.id;currentVisitDataToExport=v;els.vName.textContent=v.clientName;els.vText.value=v.transcript||'';els.aiResArea.classList.add('hidden');if(v.audioBlob){els.vAudioSec.classList.remove('hidden');els.vAudio.src=URL.createObjectURL(v.audioBlob);}else{els.vAudioSec.classList.add('hidden');}els.vModal.style.display='flex';}}
+            window.openV=(id)=>{
+                db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).get(id).onsuccess=e=>{
+                    const v=e.target.result; currentVisitIdToExport=v.id; currentVisitDataToExport=v;
+                    els.vName.textContent=v.clientName; 
+                    els.vText.value=v.transcript||''; 
+                    els.aiSumRes.value=v.aiSummary||''; 
+                    els.aiTaskRes.value=v.aiTasks||'';
+                    if(v.audioBlob){els.vAudioSec.classList.remove('hidden');els.vAudio.src=URL.createObjectURL(v.audioBlob);}else{els.vAudioSec.classList.add('hidden');}
+                    els.vModal.style.display='flex';
+                }
+            }
+            
+            els.transcribeBtn.onclick = async () => {
+                if(!currentVisitDataToExport?.audioBlob) return;
+                const parsed = await callAI('transcribe', currentVisitDataToExport.audioBlob);
+                if(parsed) {
+                    els.vText.value = parsed.trans;
+                    els.aiSumRes.value = parsed.sum;
+                    els.aiTaskRes.value = parsed.tasks;
+                    els.vMsg.textContent = "Processado!"; els.vMsg.className = 'text-green-600';
+                    
+                    // Auto-Save
+                    const tr = db.transaction([VISIT_STORE],'readwrite'); const st = tr.objectStore(VISIT_STORE);
+                    st.get(currentVisitIdToExport).onsuccess = e => { 
+                        let d=e.target.result; 
+                        d.transcript=parsed.trans; 
+                        d.aiSummary=parsed.sum; 
+                        d.aiTasks=parsed.tasks; 
+                        st.put(d); 
+                    };
+                }
+            };
+
+            els.aiAddTasks.onclick=()=>{
+                const l = els.aiTaskRes.value.split('\n').map(t=>t.replace(/^- /,'').trim()).filter(t=>t);
+                l.forEach(t=>saveTask(t));
+                alert(`${l.length} tarefas adicionadas!`);
+            };
+            
+            els.vSave.onclick = () => { 
+                const tr = db.transaction([VISIT_STORE],'readwrite'); 
+                const st = tr.objectStore(VISIT_STORE); 
+                st.get(currentVisitIdToExport).onsuccess = e => { 
+                    let d=e.target.result; 
+                    d.transcript=els.vText.value; 
+                    d.aiSummary=els.aiSumRes.value; 
+                    d.aiTasks=els.aiTaskRes.value; 
+                    st.put(d); 
+                    els.vMsg.textContent='Salvo.'; 
+                }; 
+            };
+
+            // ... rest of modal events ...
             window.askDel=(id)=>{deleteConfig={id:id,store:VISIT_STORE};els.delModal.style.display='flex';}
             els.delCancel.onclick=()=>{els.delModal.style.display='none';};els.delOk.onclick=()=>{db.transaction([deleteConfig.store],'readwrite').objectStore(deleteConfig.store).delete(deleteConfig.id).onsuccess=()=>{els.delModal.style.display='none';loadAll();}};
             els.vClose.onclick=()=>{els.vModal.style.display='none';};
             els.settingsBtn.onclick=()=>{els.settingsModal.style.display='flex';};els.settingsClose.onclick=()=>{els.settingsModal.style.display='none';};
-            els.privacyBtn.onclick=()=>{els.privacyOverlay.style.display='flex';};els.privacyOverlay.ondblclick=()=>{els.privacyOverlay.style.display='none';};
-            els.forceUpdateBtn.onclick=()=>{if(confirm("Reset?")){if('serviceWorker'in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));caches.keys().then(ns=>ns.forEach(n=>caches.delete(n)));location.reload(true);}};
-
-            // Transcribe Button
-            els.transcribeBtn.onclick = async () => {
-                if(!currentVisitDataToExport?.audioBlob) return;
-                const text = await callAI('transcribe', currentVisitDataToExport.audioBlob);
-                if(text) {
-                    els.vText.value = text;
-                    els.vMsg.textContent = "Sucesso!"; els.vMsg.className = 'text-green-600';
-                    const tr = db.transaction([VISIT_STORE],'readwrite'); const st = tr.objectStore(VISIT_STORE);
-                    st.get(currentVisitIdToExport).onsuccess = e => { let d=e.target.result; d.transcript=text; st.put(d); };
+            els.privacyBtn.onclick=()=>{els.privacyOverlay.style.display='flex';};els.privacyOverlay.ondblclick=()=>{ // Fallback for double click on overlay
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                if (tapLength < 500 && tapLength > 0) {
+                    els.privacyOverlay.style.display = 'none';
                 }
+                lastTapTime = currentTime;
             };
+            
+            let lastTapTime = 0;
+            els.privacyOverlay.addEventListener('click', (e) => {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                if (tapLength < 500 && tapLength > 0) {
+                    els.privacyOverlay.style.display = 'none';
+                    e.preventDefault();
+                }
+                lastTapTime = currentTime;
+            });
 
-            els.sumBtn.onclick = async () => { const t=await callAI('summarize', els.vText.value); if(t){ els.aiResArea.classList.remove('hidden'); els.aiResText.value=t; } };
-            els.extBtn.onclick = async () => { const t=await callAI('extract', els.vText.value); if(t){ els.aiResArea.classList.remove('hidden'); els.aiResText.value=t; } };
-            els.vSave.onclick = () => { const tr = db.transaction([VISIT_STORE],'readwrite'); const st = tr.objectStore(VISIT_STORE); st.get(currentVisitIdToExport).onsuccess = e => { let d=e.target.result; d.transcript=els.vText.value; st.put(d); els.vMsg.textContent='Salvo.'; }; };
-            els.vExport.onclick = () => { if(!currentVisitDataToExport)return; const v=currentVisitDataToExport; const b=new Blob([`CLIENTE: ${v.clientName}\n\n${els.vText.value}`],{type:'text/plain'}); const l=document.createElement('a'); l.href=URL.createObjectURL(b); l.download='relatorio.txt'; l.click(); };
-
+            els.forceUpdateBtn.onclick=()=>{if(confirm("Reset?")){if('serviceWorker'in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));caches.keys().then(ns=>ns.forEach(n=>caches.delete(n)));location.reload(true);}};
+            
             initDB();
         });
     </script>
