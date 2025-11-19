@@ -9,14 +9,18 @@
     <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=AE">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .modal { display: none; transition: opacity 0.3s ease; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
+        .modal { display: none; transition: opacity 0.2s ease; }
         .modal-overlay { background-color: rgba(0, 0, 0, 0.6); }
         .modal.flex { display: flex; }
         .task-completed { text-decoration: line-through; color: #9ca3af; }
         .input-field { @apply border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500; }
-        .label-disabled { @apply opacity-50 cursor-not-allowed; }
-        #privacy-overlay { position: fixed; inset: 0; background-color: #000000; z-index: 9999; display: none; align-items: center; justify-content: center; text-align: center; color: #333; font-size: 1rem; cursor: pointer; touch-action: manipulation; user-select: none; }
+        /* Overlay de Privacidade - Z-Index Máximo */
+        #privacy-overlay { 
+            position: fixed; inset: 0; background-color: #000000; z-index: 10000; 
+            display: none; align-items: center; justify-content: center; 
+            text-align: center; color: #444; font-size: 1.2rem; cursor: pointer; 
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -27,213 +31,564 @@
         <header class="flex justify-between items-center p-6 bg-indigo-600 text-white shadow-md">
             <div class="flex-1">
                 <h1 class="text-2xl font-bold tracking-tight">Assistente Externo</h1>
-                <p class="text-indigo-200 text-xs font-medium mt-0.5 opacity-90">v31 • Gravação Segura</p>
+                <p class="text-indigo-200 text-xs font-medium mt-0.5">v32 • Estável</p>
             </div>
             <div class="flex gap-4">
-                <button id="privacy-button" class="text-white hover:text-indigo-200 transition flex flex-col items-center">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <button id="btn-privacy" class="text-white hover:text-indigo-200 flex flex-col items-center">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243"></path></svg>
                     <span class="text-[10px]">Ecrã</span>
                 </button>
-                <button id="settings-button" class="text-white hover:text-indigo-200 transition flex flex-col items-center">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.09 2.573-1.066z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <button id="btn-settings" class="text-white hover:text-indigo-200 flex flex-col items-center">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.09 2.573-1.066z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span class="text-[10px]">Config</span>
                 </button>
             </div>
         </header>
 
-        <!-- Conteúdo -->
-        <div class="p-6 space-y-8">
+        <!-- Conteúdo Principal -->
+        <div class="p-6 space-y-8 flex-grow overflow-y-auto">
+            
             <!-- Tarefas -->
-            <div class="border-b-2 border-gray-200 pb-6">
+            <section class="border-b-2 border-gray-200 pb-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-3">Tarefas do Dia</h2>
-                <div class="flex gap-2 mb-3"><input type="text" id="task-input" class="block w-full input-field px-3 py-2" placeholder="Nova tarefa..."><button id="add-task-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">+</button></div>
-                <div id="task-list" class="space-y-2 max-h-[200px] overflow-y-auto pr-1"><p id="tasks-loading" class="text-sm text-gray-500">A carregar...</p></div>
-            </div>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="inp-task" class="block w-full input-field px-3 py-2" placeholder="Nova tarefa...">
+                    <button id="btn-add-task" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">+</button>
+                </div>
+                <div id="list-tasks" class="space-y-2 max-h-[200px] overflow-y-auto pr-1 text-sm text-gray-600">A carregar...</div>
+            </section>
+
             <!-- Agendamentos -->
-            <div class="border-b-2 border-gray-200 pb-6">
+            <section class="border-b-2 border-gray-200 pb-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-3">Visitas Agendadas</h2>
-                <button id="toggle-schedule-btn" class="text-sm text-indigo-600 font-medium mb-3 hover:underline">+ Novo Agendamento</button>
-                <div id="schedule-form" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-                    <div class="grid grid-cols-1 gap-3 mb-3"><input type="text" id="scheduledClientName" class="input-field px-3 py-2" placeholder="Nome do Cliente"><input type="text" id="scheduledContactPerson" class="input-field px-3 py-2" placeholder="Contato"><input type="email" id="scheduledEmail" class="input-field px-3 py-2" placeholder="Email"></div>
-                    <button id="saveScheduleButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg">Salvar</button>
+                <button id="btn-toggle-sch" class="text-sm text-indigo-600 font-medium mb-3 hover:underline">+ Novo Agendamento</button>
+                <div id="form-sch" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 space-y-3">
+                    <input type="text" id="sch-name" class="input-field w-full px-3 py-2" placeholder="Nome do Cliente">
+                    <input type="text" id="sch-contact" class="input-field w-full px-3 py-2" placeholder="Contato">
+                    <input type="email" id="sch-email" class="input-field w-full px-3 py-2" placeholder="Email">
+                    <button id="btn-save-sch" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg">Salvar Agendamento</button>
                 </div>
-                <div id="scheduled-visits-list" class="space-y-3 max-h-[200px] overflow-y-auto"><p id="scheduled-loading" class="text-sm text-gray-500">A carregar...</p></div>
-            </div>
+                <div id="list-sch" class="space-y-3 max-h-[200px] overflow-y-auto text-sm text-gray-600">A carregar...</div>
+            </section>
+
             <!-- Gravação -->
-            <div class="border-b-2 border-gray-200 pb-6">
+            <section class="border-b-2 border-gray-200 pb-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">Gravação</h2>
-                <div class="grid grid-cols-1 gap-3 mb-4"><input type="text" id="clientNameInput" class="input-field px-3 py-2" placeholder="Cliente (Obrigatório)"><div class="grid grid-cols-2 gap-3"><input type="text" id="contactPersonInput" class="input-field px-3 py-2" placeholder="Contato"><input type="email" id="emailInput" class="input-field px-3 py-2" placeholder="Email"></div></div>
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
-                    <div id="timerDisplay" class="text-3xl font-mono font-bold text-gray-700 mb-4">00:00:00</div>
-                    <div class="flex flex-wrap justify-center gap-3"><button id="startButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition transform active:scale-95">Gravar</button><button id="stopButton" disabled class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition transform active:scale-95 disabled:opacity-50">Parar</button></div>
-                    <div class="mt-4 flex justify-center gap-3"><button id="saveManualButton" class="text-sm text-blue-600 hover:underline">Manual (Sem Áudio)</button><span class="text-gray-300">|</span><button id="clearButton" class="text-sm text-gray-500 hover:text-gray-700">Limpar</button></div>
-                    <div id="status" class="text-xs text-gray-500 mt-2 h-4">Pronto.</div>
+                <div class="space-y-3 mb-4">
+                    <input type="text" id="rec-name" class="input-field w-full px-3 py-2" placeholder="Cliente (Obrigatório)">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="rec-contact" class="input-field w-full px-3 py-2" placeholder="Contato">
+                        <input type="email" id="rec-email" class="input-field w-full px-3 py-2" placeholder="Email">
+                    </div>
                 </div>
-            </div>
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                    <div id="timer" class="text-4xl font-mono font-bold text-gray-700 mb-6">00:00:00</div>
+                    <div class="flex justify-center gap-4">
+                        <button id="btn-rec-start" class="bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg active:scale-95 transition">Gravar</button>
+                        <button id="btn-rec-stop" disabled class="bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg active:scale-95 transition disabled:opacity-50 disabled:scale-100">Parar</button>
+                    </div>
+                    <div class="mt-6 flex justify-center gap-4 text-sm">
+                        <button id="btn-manual" class="text-blue-600 hover:underline font-medium">Manual (Sem Áudio)</button>
+                        <span class="text-gray-300">|</span>
+                        <button id="btn-clear" class="text-gray-500 hover:text-gray-700 font-medium">Limpar</button>
+                    </div>
+                    <div id="rec-status" class="text-xs text-gray-500 mt-4 h-4">Pronto.</div>
+                </div>
+            </section>
+
             <!-- Histórico -->
-            <div><h2 class="text-xl font-bold text-gray-800 mb-4">Histórico</h2><div id="history-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-1"><p id="history-loading" class="text-sm text-gray-500">A carregar...</p></div></div>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Histórico</h2>
+                <div id="list-hist" class="space-y-3 pb-10 text-sm text-gray-600">A carregar...</div>
+            </section>
         </div>
     </div>
 
-    <!-- Modais e Scripts Ocultos -->
-    <!-- (Modais idênticos à versão anterior, apenas lógica JS muda abaixo) -->
-    <div id="privacy-overlay"><div><svg class="h-16 w-16 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243" stroke-linecap="round" stroke-linejoin="round"></path></svg><p class="font-bold text-lg">Ecrã Oculto</p><p class="text-sm text-gray-500 mt-2">Toque 2x para voltar</p></div></div>
+    <!-- ================= MODAIS ================= -->
 
-    <div id="settings-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-2xl shadow-xl w-full max-w-md z-10 overflow-hidden"><div class="flex justify-between items-center p-4 bg-gray-50 border-b"><h3 class="font-bold text-gray-800">Configurações</h3><button id="settings-modal-close-button" class="text-gray-500">✕</button></div><div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto"><div><label class="block text-sm font-medium text-gray-700 mb-1">Provedor de IA</label><select id="ai-provider-select" class="w-full input-field px-3 py-2 bg-white"><option value="google">Google Gemini (Grátis)</option><option value="groq">Groq Cloud (Grátis/Beta)</option></select></div><div id="google-settings"><label class="block text-sm font-medium text-gray-700 mb-1">Chave API Gemini</label><input type="password" id="gemini-api-key-input" class="w-full input-field px-3 py-2" placeholder="Cole a chave aqui"><label class="block text-sm font-medium text-gray-700 mt-3 mb-1">Modelo Gemini</label><input type="text" id="gemini-model-input" class="w-full input-field px-3 py-2 bg-gray-50 font-mono text-sm" value="gemini-2.0-flash-exp"><p class="text-xs text-gray-500 mt-1">Padrão: gemini-2.0-flash-exp</p></div><div id="groq-settings" class="hidden"><label class="block text-sm font-medium text-gray-700 mb-1">Chave API Groq</label><input type="password" id="groq-api-key-input" class="w-full input-field px-3 py-2" placeholder="gsk_..."><p class="text-xs text-gray-500 mt-1">Usa Whisper Large v3 + Llama 3</p></div><div class="pt-4 border-t"><button id="export-data-button" class="w-full bg-blue-100 text-blue-700 font-bold py-2 rounded mb-2">Exportar Dados</button><input type="file" id="import-data-input" class="hidden" accept=".json"><label for="import-data-input" class="block w-full text-center bg-green-100 text-green-700 font-bold py-2 rounded cursor-pointer">Importar Dados</label></div><div class="pt-2"><button id="force-update-button" class="w-full border border-red-300 text-red-500 font-bold py-2 rounded text-xs">Forçar Atualização (Reset)</button></div></div><div class="p-4 bg-gray-50 border-t flex justify-end"><button id="save-settings-button" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded">Salvar</button></div></div></div>
-    <div id="visit-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl z-10 max-h-[90vh] flex flex-col"><div class="flex justify-between items-center p-4 border-b"><h3 id="modal-title" class="text-lg font-bold text-gray-800">Detalhes</h3><button id="modal-close-button" class="text-gray-500 text-xl">✕</button></div><div class="p-6 space-y-4 overflow-y-auto flex-grow"><div><span class="text-xs text-gray-500 uppercase">Cliente</span><p id="modal-client-name" class="font-bold text-lg text-gray-900"></p></div><div id="modal-audio-section" class="bg-gray-50 p-3 rounded-lg border"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 uppercase">Áudio</span></div><audio id="modalAudioPlayer" controls class="w-full mb-3 h-10"></audio><button id="modal-ai-transcribe-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2 transition">✨ Transcrever, Resumir e Tarefas</button></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Transcrição (Corrigida)</label><textarea id="modalTranscriptTextarea" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" rows="6"></textarea></div><div id="modal-status-message" class="text-xs font-bold h-4"></div><div id="modal-ai-summary-section"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Resumo</label><textarea id="ai-summary-result" class="w-full p-3 bg-white border border-gray-300 rounded-lg" rows="4"></textarea></div><div id="modal-ai-tasks-section"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tarefas Identificadas</label><textarea id="ai-tasks-result" class="w-full p-3 bg-white border border-gray-300 rounded-lg" rows="4"></textarea><button id="add-ai-tasks-button" class="mt-2 w-full bg-indigo-100 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-200">Adicionar à Lista de Tarefas</button></div></div><div class="p-4 bg-gray-50 border-t flex justify-end gap-2"><button id="modal-save-changes-button" class="bg-green-600 text-white font-bold py-2 px-4 rounded">Salvar Tudo</button><button id="modal-export-button" class="bg-purple-600 text-white font-bold py-2 px-4 rounded">Exportar</button></div></div></div>
-    <div id="delete-confirm-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4"><div class="modal-overlay fixed inset-0"></div><div class="bg-white rounded-xl shadow-xl w-full max-w-xs p-6 text-center"><h3 class="text-lg font-bold text-gray-800 mb-2">Apagar?</h3><div class="flex justify-center gap-3 mt-4"><button id="delete-confirm-cancel" class="flex-1 py-2 bg-gray-200 text-gray-700 font-bold rounded">Não</button><button id="delete-confirm-ok" class="flex-1 py-2 bg-red-600 text-white font-bold rounded">Sim</button></div></div></div>
+    <!-- Privacidade -->
+    <div id="privacy-overlay">
+        <div>
+            <svg class="h-16 w-16 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 00-4.243-4.243"></path></svg>
+            <p class="font-bold text-xl">Ecrã Oculto</p>
+            <p class="text-sm text-gray-600 mt-2">Toque 2 vezes rápido para voltar</p>
+        </div>
+    </div>
 
+    <!-- Configurações -->
+    <div id="modal-settings" class="modal fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="modal-overlay fixed inset-0"></div>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md z-10 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center p-4 bg-gray-50 border-b">
+                <h3 class="font-bold text-gray-800">Configurações</h3>
+                <button class="btn-close-modal text-gray-500 text-xl p-2">✕</button>
+            </div>
+            <div class="p-6 space-y-5 overflow-y-auto">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Provedor IA</label>
+                    <select id="conf-provider" class="w-full input-field px-3 py-2 bg-white">
+                        <option value="google">Google Gemini</option>
+                        <option value="groq">Groq Cloud</option>
+                    </select>
+                </div>
+                <div id="sec-google">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave Gemini</label>
+                    <input type="password" id="conf-key-google" class="w-full input-field px-3 py-2" placeholder="Cole a chave aqui">
+                </div>
+                <div id="sec-groq" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave Groq</label>
+                    <input type="password" id="conf-key-groq" class="w-full input-field px-3 py-2" placeholder="gsk_...">
+                </div>
+                <div class="pt-4 border-t space-y-3">
+                    <button id="btn-export" class="w-full bg-blue-100 text-blue-800 font-bold py-2 rounded">Exportar Backup</button>
+                    <label class="block w-full text-center bg-green-100 text-green-800 font-bold py-2 rounded cursor-pointer">
+                        Importar Backup <input type="file" id="inp-import" class="hidden" accept=".json">
+                    </label>
+                    <div id="backup-msg" class="text-xs text-center h-4 text-gray-500"></div>
+                </div>
+                <div class="pt-2">
+                    <button id="btn-reset-app" class="w-full border border-red-300 text-red-500 font-bold py-2 rounded text-xs">Resetar App (Limpar Cache)</button>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end">
+                <button id="btn-save-conf" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalhes Visita -->
+    <div id="modal-visit" class="modal fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="modal-overlay fixed inset-0"></div>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl z-10 max-h-[95vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-800">Detalhes</h3>
+                <button class="btn-close-modal text-gray-500 text-xl p-2">✕</button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto flex-grow">
+                <div><span class="text-xs text-gray-500 uppercase">Cliente</span><p id="view-client" class="font-bold text-lg text-gray-900"></p></div>
+                
+                <div id="sec-audio" class="bg-gray-50 p-3 rounded-lg border">
+                    <div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 uppercase">Áudio</span></div>
+                    <audio id="view-audio" controls class="w-full mb-3 h-10"></audio>
+                    <button id="btn-transcribe" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2">
+                        ✨ Transcrever & Analisar (IA)
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Transcrição</label>
+                        <textarea id="view-transcript" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm" rows="6"></textarea>
+                    </div>
+                    <div id="view-msg" class="text-xs font-bold h-4 text-center"></div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Resumo</label>
+                        <textarea id="view-summary" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm" rows="4"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tarefas</label>
+                        <textarea id="view-tasks" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm" rows="4"></textarea>
+                        <button id="btn-add-tasks-list" class="mt-2 w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded border border-indigo-100">Copiar Tarefas para o Dia</button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                <button id="btn-save-visit" class="bg-green-600 text-white font-bold py-2 px-4 rounded">Salvar Tudo</button>
+                <button id="btn-export-visit" class="bg-purple-600 text-white font-bold py-2 px-4 rounded">Exportar TXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lógica JS (Refatorada) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let mediaRecorder, audioChunks = [], audioStream, timerInterval, startTime, wakeLock = null;
-            let db, currentVisitIdToExport=null, currentVisitDataToExport=null, deleteConfig={id:null,store:null};
-            const DB_NAME="VisitAssistantDB", DB_VERSION=5, VISIT_STORE="visits", SCHEDULE_STORE="scheduledVisits", TASK_STORE="tasks";
+            // --- 1. CONSTANTES & ESTADO ---
+            const DB_NAME="AssistenteDB", DB_VERSION=6; // Versão 6 para forçar reset limpo
+            const STORES = { VISIT:'visits', SCH:'schedules', TASK:'tasks' };
+            let db, mediaRecorder, audioChunks=[], timerInt, wakeLock, currentVisit;
 
-            // UI References (Same as before)
-            const els={settingsBtn:document.getElementById('settings-button'),settingsModal:document.getElementById('settings-modal'),settingsClose:document.getElementById('settings-modal-close-button'),saveSettingsBtn:document.getElementById('save-settings-button'),providerSelect:document.getElementById('ai-provider-select'),googleSettings:document.getElementById('google-settings'),groqSettings:document.getElementById('groq-settings'),apiKeyInput:document.getElementById('gemini-api-key-input'),modelInput:document.getElementById('gemini-model-input'),groqKeyInput:document.getElementById('groq-api-key-input'),forceUpdateBtn:document.getElementById('force-update-button'),privacyBtn:document.getElementById('privacy-button'),privacyOverlay:document.getElementById('privacy-overlay'),exportBtn:document.getElementById('export-data-button'),importInput:document.getElementById('import-data-input'),backupStatus:document.getElementById('backup-status'),taskInput:document.getElementById('task-input'),addTaskBtn:document.getElementById('add-task-button'),taskList:document.getElementById('task-list'),tasksLoading:document.getElementById('tasks-loading'),schName:document.getElementById('scheduledClientName'),schContact:document.getElementById('scheduledContactPerson'),schEmail:document.getElementById('scheduledEmail'),saveSchBtn:document.getElementById('saveScheduleButton'),schList:document.getElementById('scheduled-visits-list'),schLoading:document.getElementById('scheduled-loading'),toggleSchBtn:document.getElementById('toggle-schedule-btn'),scheduleForm:document.getElementById('schedule-form'),startBtn:document.getElementById('startButton'),stopBtn:document.getElementById('stopButton'),clearBtn:document.getElementById('clearButton'),manualBtn:document.getElementById('saveManualButton'),status:document.getElementById('status'),timer:document.getElementById('timerDisplay'),cName:document.getElementById('clientNameInput'),cContact:document.getElementById('contactPersonInput'),cEmail:document.getElementById('emailInput'),histList:document.getElementById('history-list'),histLoading:document.getElementById('history-loading'),vModal:document.getElementById('visit-modal'),vClose:document.getElementById('modal-close-button'),vTitle:document.getElementById('modal-title'),vName:document.getElementById('modal-client-name'),vAudioSec:document.getElementById('modal-audio-section'),vAudio:document.getElementById('modalAudioPlayer'),vText:document.getElementById('modalTranscriptTextarea'),vSave:document.getElementById('modal-save-changes-button'),vExport:document.getElementById('modal-export-button'),vMsg:document.getElementById('modal-status-message'),transcribeBtn:document.getElementById('modal-ai-transcribe-button'),aiSumRes:document.getElementById('ai-summary-result'),aiTaskRes:document.getElementById('ai-tasks-result'),aiAddTasks:document.getElementById('add-ai-tasks-button'),delModal:document.getElementById('delete-confirm-modal'),delCancel:document.getElementById('delete-confirm-cancel'),delOk:document.getElementById('delete-confirm-ok')};
+            // --- 2. SELETORES UI (Organizados) ---
+            const $ = (id) => document.getElementById(id);
+            const UI = {
+                screens: { privacy: $('privacy-overlay'), settings: $('modal-settings'), visit: $('modal-visit') },
+                btns: { 
+                    privacy: $('btn-privacy'), settings: $('btn-settings'), reset: $('btn-reset-app'),
+                    saveConf: $('btn-save-conf'), export: $('btn-export'), 
+                    addT: $('btn-add-task'), saveSch: $('btn-save-sch'), toggleSch: $('btn-toggle-sch'),
+                    recStart: $('btn-rec-start'), recStop: $('btn-rec-stop'), recMan: $('btn-manual'), recClear: $('btn-clear'),
+                    vClose: document.querySelectorAll('.btn-close-modal'), vTranscribe: $('btn-transcribe'), vSave: $('btn-save-visit'), vExport: $('btn-export-visit'), vAddTasks: $('btn-add-tasks-list')
+                },
+                inputs: {
+                    confKeyG: $('conf-key-google'), confKeyQ: $('conf-key-groq'), confProv: $('conf-provider'), imp: $('inp-import'),
+                    tIn: $('inp-task'), 
+                    sName: $('sch-name'), sCont: $('sch-contact'), sMail: $('sch-email'),
+                    rName: $('rec-name'), rCont: $('rec-contact'), rMail: $('rec-email'),
+                    vTrans: $('view-transcript'), vSum: $('view-summary'), vTask: $('view-tasks')
+                },
+                lists: { t: $('list-tasks'), s: $('list-sch'), h: $('list-hist') },
+                display: { timer: $('timer'), status: $('rec-status'), vName: $('view-client'), vMsg: $('view-msg'), vAudio: $('view-audio'), vAudioSec: $('sec-audio'), backMsg: $('backup-msg') }
+            };
 
-            // Helpers
-            const blobToBase64=(b)=>new Promise((r,j)=>{if(!b)r(null);const fr=new FileReader();fr.readAsDataURL(b);fr.onloadend=()=>r(fr.result);fr.onerror=j;});
-            const base64ToBlob=(b64)=>{if(!b64)return null;try{const p=b64.split(';base64,');return new Blob([Uint8Array.from(atob(p[1]),c=>c.charCodeAt(0))],{type:p[0].split(':')[1]});}catch(e){return null;}};
-            const promisify=(req)=>new Promise((r,j)=>{req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error);});
+            // --- 3. BANCO DE DADOS (Async/Await para Estabilidade) ---
+            const openDB = () => new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if(!d.objectStoreNames.contains(STORES.VISIT)) d.createObjectStore(STORES.VISIT, {keyPath:'id', autoIncrement:true});
+                    if(!d.objectStoreNames.contains(STORES.SCH)) d.createObjectStore(STORES.SCH, {keyPath:'id', autoIncrement:true});
+                    if(!d.objectStoreNames.contains(STORES.TASK)) d.createObjectStore(STORES.TASK, {keyPath:'id', autoIncrement:true});
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
 
-            // Config/AI Logic (Same as v26)
-            function loadSettings(){ els.apiKeyInput.value = localStorage.getItem('geminiApiKey') || ''; els.modelInput.value = localStorage.getItem('geminiModel') || 'gemini-2.0-flash-exp'; els.groqKeyInput.value = localStorage.getItem('groqApiKey') || ''; els.providerSelect.value = localStorage.getItem('aiProvider') || 'google'; toggleProviderUI(); }
-            function saveSettings(){ localStorage.setItem('geminiApiKey', els.apiKeyInput.value.trim()); localStorage.setItem('geminiModel', els.modelInput.value.trim() || 'gemini-2.0-flash-exp'); localStorage.setItem('groqApiKey', els.groqKeyInput.value.trim()); localStorage.setItem('aiProvider', els.providerSelect.value); els.settingsModal.style.display='none'; }
-            function toggleProviderUI(){ const isGroq = els.providerSelect.value === 'groq'; els.googleSettings.style.display = isGroq ? 'none' : 'block'; els.groqSettings.style.display = isGroq ? 'block' : 'none'; }
-            els.providerSelect.onchange=toggleProviderUI; els.saveSettingsBtn.onclick=saveSettings;
+            const dbOp = (store, mode) => db.transaction(store, mode).objectStore(store);
+            const getAll = (store) => new Promise((r) => dbOp(store, 'readonly').getAll().onsuccess = (e) => r(e.target.result));
+            const add = (store, data) => new Promise((r, j) => { const req = dbOp(store, 'readwrite').add(data); req.onsuccess = r; req.onerror = j; });
+            const put = (store, data) => new Promise((r, j) => { const req = dbOp(store, 'readwrite').put(data); req.onsuccess = r; req.onerror = j; });
+            const del = (store, id) => new Promise((r) => { dbOp(store, 'readwrite').delete(id).onsuccess = r; });
+            const get = (store, id) => new Promise((r) => { dbOp(store, 'readonly').get(id).onsuccess = (e) => r(e.target.result); });
 
-            async function callSmartAI(data) { const provider = localStorage.getItem('aiProvider') || 'google'; els.vMsg.textContent = `A analisar com ${provider}...`; try { let result; if (provider === 'google') result = await smartGoogle(data); if (provider === 'groq') result = await smartGroq(data); return parseAIResult(result); } catch (e) { els.vMsg.textContent = `Erro: ${e.message}`; return null; } }
-            function parseAIResult(text) { const trans = text.match(/---TRANSCRICAO---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || text; const sum = text.match(/---RESUMO---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || ""; const tasks = text.match(/---TAREFAS---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || ""; return { trans, sum, tasks }; }
-            async function smartGoogle(data) { const key = localStorage.getItem('geminiApiKey'); const model = localStorage.getItem('geminiModel') || 'gemini-2.0-flash-exp'; if (!key) throw new Error("Falta chave Google"); const prompt = `És uma secretária eficiente. Ouve o áudio e gera: 1. Transcrição corrigida. 2. Resumo. 3. Lista de tarefas. Responda estritamente: ---TRANSCRICAO--- (texto) ---RESUMO--- (texto) ---TAREFAS--- (texto)`; const b64 = await blobToBase64(data); const parts = [{ text: prompt }, { inlineData: { mimeType: b64.split(';')[0].split(':')[1], data: b64.split(',')[1] } }]; const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: parts }] }) }); if (!res.ok) throw new Error((await res.json()).error?.message || res.status); return (await res.json()).candidates[0].content.parts[0].text; }
-            async function smartGroq(data) { const key = localStorage.getItem('groqApiKey'); if (!key) throw new Error("Falta chave Groq"); els.vMsg.textContent = "1/2 Transcrevendo..."; const formData = new FormData(); formData.append('file', data, 'rec.webm'); formData.append('model', 'whisper-large-v3'); formData.append('language', 'pt'); const resTrans = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { 'Authorization': `Bearer ${key}` }, body: formData }); if (!resTrans.ok) throw new Error(await resTrans.text()); const transcript = (await resTrans.json()).text; els.vMsg.textContent = "2/2 Organizando..."; const prompt = `Formate: "${transcript}". Responda estritamente: ---TRANSCRICAO--- (Corrigida) ---RESUMO--- (Tópicos) ---TAREFAS--- (Ações)`; const resChat = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] }) }); if (!resChat.ok) throw new Error(await resChat.text()); return (await resChat.json()).choices[0].message.content; }
-
-            // DB Init
-            function initDB() { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onsuccess = e => { db = e.target.result; loadAll(); }; r.onupgradeneeded = e => { const d = e.target.result; if(!d.objectStoreNames.contains(VISIT_STORE)) d.createObjectStore(VISIT_STORE,{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains(SCHEDULE_STORE)) d.createObjectStore(SCHEDULE_STORE,{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains(TASK_STORE)) d.createObjectStore(TASK_STORE,{keyPath:'id',autoIncrement:true}); }; }
-            function loadAll() { loadTasks(); loadSch(); loadHistory(); loadSettings(); }
+            // --- 4. FUNÇÕES LÓGICAS ---
             
-            // --- EXPORT / IMPORT (Scoping Fixed) ---
-            async function exportData() { if(!db)return; try { els.backupStatus.textContent = "A exportar..."; const t=await promisify(db.transaction([TASK_STORE],'readonly').objectStore(TASK_STORE).getAll()); const s=await promisify(db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll()); const v=await promisify(db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll()); const v2=[]; for(const i of v){ if(i.audioBlob) i.audioBase64=await blobToBase64(i.audioBlob); delete i.audioBlob; v2.push(i); } const backup = { tasks:t, scheduledVisits:s, visits:v2, settings:{ geminiApiKey: els.apiKeyInput.value, groqApiKey: els.groqKeyInput.value, provider: els.providerSelect.value, model: els.modelInput.value } }; const url = URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'})); const l = document.createElement('a'); l.href=url; l.download=`backup.json`; l.click(); els.backupStatus.textContent = "OK!"; } catch(e) { alert("Erro: "+e); } }
-            function importData(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=async(ev)=>{ const d=JSON.parse(ev.target.result); if(confirm("Restaurar backup?")) { const tr=db.transaction([TASK_STORE,SCHEDULE_STORE,VISIT_STORE],'readwrite'); await promisify(tr.objectStore(TASK_STORE).clear()); await promisify(tr.objectStore(SCHEDULE_STORE).clear()); await promisify(tr.objectStore(VISIT_STORE).clear()); d.tasks?.forEach(i=>tr.objectStore(TASK_STORE).add(i)); d.scheduledVisits?.forEach(i=>tr.objectStore(SCHEDULE_STORE).add(i)); d.visits?.forEach(i=>{ if(i.audioBase64) i.audioBlob=base64ToBlob(i.audioBase64); delete i.id; delete i.audioBase64; tr.objectStore(VISIT_STORE).add(i); }); if(d.settings) { if(d.settings.geminiApiKey) localStorage.setItem('geminiApiKey', d.settings.geminiApiKey); if(d.settings.model) localStorage.setItem('geminiModel', d.settings.model); if(d.settings.groqApiKey) localStorage.setItem('groqApiKey', d.settings.groqApiKey); if(d.settings.provider) localStorage.setItem('aiProvider', d.settings.provider); } tr.oncomplete=()=>{ alert("Restaurado!"); window.location.reload(); }; } }; r.readAsText(f); }
-            els.exportBtn.onclick=exportData; els.importInput.onchange=importData;
+            // Inicialização
+            (async () => {
+                try {
+                    db = await openDB();
+                    renderAll();
+                    loadConfigs();
+                } catch (e) { alert("Erro crítico no DB. Faça Reset."); }
+            })();
 
-            // --- EVENT DELEGATION FOR DYNAMIC LISTS ---
-            function saveTask(t){const tr=db.transaction([TASK_STORE],'readwrite');tr.objectStore(TASK_STORE).add({text:t,completed:false});tr.oncomplete=loadTasks;}
-            function loadTasks(){db.transaction([TASK_STORE],'readonly').objectStore(TASK_STORE).getAll().onsuccess=e=>{els.taskList.innerHTML='';e.target.result.sort((a,b)=>a.completed-b.completed).forEach(t=>{els.taskList.innerHTML+=`<div class="flex justify-between p-2 border mb-1 bg-white rounded"><span class="flex-1 cursor-pointer task-text ${t.completed?'line-through text-gray-400':''}" data-id="${t.id}">${t.text}</span><button class="text-red-500 px-2 del-task" data-id="${t.id}">x</button></div>`});els.tasksLoading.textContent=e.target.result.length?'':'Sem tarefas.';}}
-            els.taskList.addEventListener('click', e => {
-                if(e.target.classList.contains('task-text')){ const id=parseInt(e.target.dataset.id); const s=db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE); s.get(id).onsuccess=e=>{let d=e.target.result;d.completed=!d.completed;s.put(d).onsuccess=loadTasks;}; }
-                if(e.target.classList.contains('del-task')){ const id=parseInt(e.target.dataset.id); db.transaction([TASK_STORE],'readwrite').objectStore(TASK_STORE).delete(id).onsuccess=loadTasks; }
-            });
-            els.addTaskBtn.onclick=()=>{if(els.taskInput.value){saveTask(els.taskInput.value);els.taskInput.value='';}};
+            function renderAll() { renderTasks(); renderSch(); renderHist(); }
 
-            function saveSch(){if(!els.schName.value)return;db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).add({clientName:els.schName.value,contactPerson:els.schContact.value,email:els.schEmail.value,status:'scheduled'}).onsuccess=()=>{loadSch();els.schName.value='';};}
-            function loadSch(){db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).getAll().onsuccess=e=>{els.schList.innerHTML='';e.target.result.filter(s=>s.status==='scheduled').forEach(s=>{els.schList.innerHTML+=`<div class="flex justify-between p-3 bg-white border mb-2 rounded"><div><b>${s.clientName}</b><br>${s.contactPerson}</div><div><button class="bg-green-100 text-green-800 px-2 rounded mr-1 load-s" data-id="${s.id}">Ir</button><button class="bg-red-100 text-red-800 px-2 rounded del-s" data-id="${s.id}">x</button></div></div>`;});els.schLoading.textContent='';}}
-            els.schList.addEventListener('click', e => {
-                if(e.target.classList.contains('load-s')){ const id=parseInt(e.target.dataset.id); db.transaction([SCHEDULE_STORE],'readonly').objectStore(SCHEDULE_STORE).get(id).onsuccess=e=>{const d=e.target.result;els.cName.value=d.clientName;els.cContact.value=d.contactPerson;els.cEmail.value=d.email;currentScheduledVisitId=d.id;els.status.textContent='Carregado.';}; }
-                if(e.target.classList.contains('del-s')){ const id=parseInt(e.target.dataset.id); db.transaction([SCHEDULE_STORE],'readwrite').objectStore(SCHEDULE_STORE).delete(id).onsuccess=loadSch; }
-            });
-            els.saveSchBtn.onclick=saveSch;
-            els.toggleSchBtn.onclick=()=>{els.scheduleForm.classList.toggle('hidden');};
+            // Tarefas
+            async function renderTasks() {
+                const tasks = await getAll(STORES.TASK);
+                UI.lists.t.innerHTML = tasks.length ? '' : '<p class="text-gray-400 italic p-2">Sem tarefas.</p>';
+                tasks.sort((a,b)=>a.completed-b.completed).forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm";
+                    div.innerHTML = `<span class="flex-1 cursor-pointer ${t.completed?'line-through text-gray-400':''}" onclick="toggleTask(${t.id})">${t.text}</span><button onclick="delTask(${t.id})" class="text-red-400 px-2 font-bold">×</button>`;
+                    UI.lists.t.appendChild(div);
+                });
+            }
+            UI.btns.addT.onclick = async () => { if(UI.inputs.tIn.value) { await add(STORES.TASK, {text:UI.inputs.tIn.value, completed:false}); UI.inputs.tIn.value=''; renderTasks(); }};
+            window.toggleTask = async (id) => { const t = await get(STORES.TASK, id); t.completed = !t.completed; await put(STORES.TASK, t); renderTasks(); };
+            window.delTask = async (id) => { await del(STORES.TASK, id); renderTasks(); };
 
-            // --- ROBUST RECORDING (v31) ---
-            const reqWL=async()=>{try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}}; const relWL=async()=>{if(wakeLock)await wakeLock.release();wakeLock=null;};
-            els.startBtn.onclick=async()=>{
-                if(!els.cName.value.trim()){alert('Nome cliente?');return;}
-                try{
-                    // 1. Deteção de MimeType
-                    let options = {};
-                    if (MediaRecorder.isTypeSupported('audio/mp4')) options.mimeType = 'audio/mp4';
-                    else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) options.mimeType = 'audio/webm;codecs=opus';
+            // Agendamentos
+            async function renderSch() {
+                const list = await getAll(STORES.SCH);
+                UI.lists.s.innerHTML = list.length ? '' : '<p class="text-gray-400 italic">Nada agendado.</p>';
+                list.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm mb-2";
+                    div.innerHTML = `<div><div class="font-bold">${s.name}</div><div class="text-xs text-gray-500">${s.contact}</div></div><div><button onclick="loadSch(${s.id})" class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs mr-1">Carregar</button><button onclick="delSch(${s.id})" class="text-red-400 font-bold px-2">×</button></div>`;
+                    UI.lists.s.appendChild(div);
+                });
+            }
+            UI.btns.saveSch.onclick = async () => { if(UI.inputs.sName.value){ await add(STORES.SCH, {name:UI.inputs.sName.value, contact:UI.inputs.sCont.value, email:UI.inputs.sMail.value}); UI.inputs.sName.value=''; renderSch(); $('#schedule-form').classList.add('hidden'); }};
+            UI.btns.toggleSch.onclick = () => $('#schedule-form').classList.toggle('hidden');
+            window.loadSch = async (id) => { const s = await get(STORES.SCH, id); UI.inputs.rName.value=s.name; UI.inputs.rCont.value=s.contact; UI.inputs.rMail.value=s.email; window.scrollTo(0, UI.inputs.rName.offsetTop - 100); };
+            window.delSch = async (id) => { await del(STORES.SCH, id); renderSch(); };
+
+            // Histórico
+            async function renderHist() {
+                const list = await getAll(STORES.VISIT);
+                UI.lists.h.innerHTML = list.length ? '' : '<p class="text-gray-400 italic">Histórico vazio.</p>';
+                list.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(v => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center p-4 bg-white border rounded-lg shadow-sm mb-2";
+                    div.innerHTML = `<div><div class="font-bold text-gray-800">${v.client}</div><div class="text-xs text-gray-500">${new Date(v.date).toLocaleString()}</div></div><div><button onclick="openVisit(${v.id})" class="bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded mr-2 text-sm">Ver</button><button onclick="delVisit(${v.id})" class="text-red-400 font-bold px-2">×</button></div>`;
+                    UI.lists.h.appendChild(div);
+                });
+            }
+            window.delVisit = async (id) => { if(confirm("Apagar visita?")) { await del(STORES.VISIT, id); renderHist(); } };
+
+            // --- 5. GRAVAÇÃO DE ÁUDIO (ROBUSTA) ---
+            const reqWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){} };
+            const relWakeLock = async () => { if(wakeLock) await wakeLock.release(); wakeLock=null; };
+
+            UI.btns.recStart.onclick = async () => {
+                if(!UI.inputs.rName.value.trim()) return alert("Nome do cliente obrigatório!");
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+                    audioChunks = [];
+                    mediaRecorder = new MediaRecorder(stream);
                     
-                    audioStream=await navigator.mediaDevices.getUserMedia({audio:true});
-                    isRecording=true; audioChunks=[]; startTime=Date.now();
-                    timerInterval=setInterval(()=>{els.timer.textContent=new Date(Date.now()-startTime).toISOString().slice(11,19);},1000);
-                    await reqWL();
-                    
-                    mediaRecorder=new MediaRecorder(audioStream, options);
-                    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
-                    mediaRecorder.onstop=()=>{
-                        const blobType = mediaRecorder.mimeType || 'audio/webm';
-                        if (audioChunks.length === 0) { alert("Erro: Áudio vazio!"); return; }
-                        const blob=new Blob(audioChunks,{type:blobType});
-                        saveVisit({clientName:els.cName.value,contactPerson:els.cContact.value,email:els.cEmail.value,dateTime:new Date().toISOString(),transcript:'',aiSummary:'',aiTasks:'',audioBlob:blob});
-                        audioStream.getTracks().forEach(t=>t.stop());
+                    mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
+                    mediaRecorder.onstop = async () => {
+                        const blob = new Blob(audioChunks, {type: 'audio/webm'}); // Webm é padrão seguro
+                        await saveVisitToDB(blob);
+                        stream.getTracks().forEach(t => t.stop());
                     };
-                    // 2. Timeslice para garantir chunks
-                    mediaRecorder.start(1000);
-                    els.startBtn.classList.add('hidden');els.stopBtn.disabled=false;els.stopBtn.classList.remove('hidden');els.manualBtn.disabled=true;
-                }catch(e){alert('Erro Mic: '+e);}
-            };
-            els.stopBtn.onclick=async()=>{if(!isRecording)return;isRecording=false;clearInterval(timerInterval);await relWL();mediaRecorder.stop();els.startBtn.classList.remove('hidden');els.stopBtn.classList.add('hidden');els.manualBtn.disabled=false;els.status.textContent='Guardado.';};
-            els.manualBtn.onclick=()=>{if(!els.cName.value){alert('Nome cliente?');return;}saveVisit({clientName:els.cName.value,contactPerson:els.cContact.value,email:els.cEmail.value,dateTime:new Date().toISOString(),transcript:'Nota Manual',aiSummary:'',aiTasks:'',audioBlob:null});};
-            els.clearBtn.onclick=()=>{isRecording=false;clearInterval(timerInterval);relWL();els.cName.value='';els.timer.textContent='00:00:00';els.startBtn.classList.remove('hidden');els.stopBtn.classList.add('hidden');};
 
-            function saveVisit(d){
-                const tr=db.transaction([VISIT_STORE],'readwrite');
-                const st=tr.objectStore(VISIT_STORE);
-                const req=st.add(d);
-                req.onsuccess=()=>{
-                    loadHistory();
-                    if(currentScheduledVisitId){
-                        const tr2=db.transaction([SCHEDULE_STORE],'readwrite');
-                        tr2.objectStore(SCHEDULE_STORE).get(currentScheduledVisitId).onsuccess=e=>{let s=e.target.result;if(s){s.status='completed';tr2.objectStore(SCHEDULE_STORE).put(s).onsuccess=loadSch;currentScheduledVisitId=null;}};
-                    }
-                    els.cName.value='';els.timer.textContent='00:00:00';
-                };
-                req.onerror=(e)=>{ alert("Erro ao salvar: " + e.target.error); };
-            }
-
-            // History Logic - Event Delegation (Fixes buttons)
-            function loadHistory(){
-                db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).getAll().onsuccess=e=>{
-                    els.histList.innerHTML='';
-                    const res = e.target.result;
-                    if(res.length===0) els.histLoading.textContent="Sem histórico.";
-                    else els.histLoading.textContent="";
+                    mediaRecorder.start(1000); // Timeslice 1s para garantir chunks
+                    await reqWakeLock();
                     
-                    res.sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).forEach(v=>{
-                        els.histList.innerHTML+=`<div class="p-3 bg-white border rounded mb-2 flex justify-between items-center"><div><b>${v.clientName}</b><br><span class="text-xs text-gray-500">${new Date(v.dateTime).toLocaleDateString()}</span>${!v.audioBlob?'<span class="text-[10px] bg-blue-100 text-blue-800 px-1 rounded ml-2">Manual</span>':''}</div><div><button class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded mr-2 text-sm view-v" data-id="${v.id}">Ver</button><button class="text-red-400 px-2 ask-del" data-id="${v.id}">x</button></div></div>`;
-                    });
+                    // UI Update
+                    UI.btns.recStart.classList.add('hidden');
+                    UI.btns.recStop.disabled = false; UI.btns.recStop.classList.remove('hidden');
+                    
+                    // Timer
+                    const start = Date.now();
+                    timerInt = setInterval(() => {
+                        const diff = new Date(Date.now() - start);
+                        UI.display.timer.textContent = diff.toISOString().slice(11,19);
+                    }, 1000);
+                    UI.display.status.textContent = "A Gravar...";
+
+                } catch(e) { alert("Erro microfone: " + e.message); }
+            };
+
+            UI.btns.recStop.onclick = async () => {
+                if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop(); // Isto dispara o onstop
+                    clearInterval(timerInt);
+                    await relWakeLock();
+                    
+                    // Reset UI
+                    UI.btns.recStart.classList.remove('hidden');
+                    UI.btns.recStop.classList.add('hidden');
+                    UI.display.status.textContent = "A guardar...";
+                }
+            };
+
+            UI.btns.recMan.onclick = async () => {
+                if(!UI.inputs.rName.value.trim()) return alert("Nome obrigatório!");
+                await saveVisitToDB(null);
+            };
+
+            UI.btns.recClear.onclick = () => {
+                UI.inputs.rName.value = ''; UI.inputs.rCont.value = ''; UI.inputs.rMail.value = '';
+                UI.display.timer.textContent = "00:00:00";
+            };
+
+            async function saveVisitToDB(blob) {
+                const visit = {
+                    client: UI.inputs.rName.value,
+                    contact: UI.inputs.rCont.value,
+                    email: UI.inputs.rMail.value,
+                    date: new Date().toISOString(),
+                    audio: blob,
+                    transcription: "",
+                    summary: "",
+                    tasks: ""
                 };
+                await add(STORES.VISIT, visit);
+                renderHist();
+                UI.display.status.textContent = "Guardado!";
+                UI.btns.recClear.click(); // Limpa form
             }
-            els.histList.addEventListener('click', e => {
-                if(e.target.classList.contains('view-v')) openV(parseInt(e.target.dataset.id));
-                if(e.target.classList.contains('ask-del')) askDel(parseInt(e.target.dataset.id));
+
+            // --- 6. MODAL & IA ---
+            window.openVisit = async (id) => {
+                currentVisit = await get(STORES.VISIT, id);
+                UI.display.vName.textContent = currentVisit.client;
+                UI.inputs.vTrans.value = currentVisit.transcription;
+                UI.inputs.vSum.value = currentVisit.summary;
+                UI.inputs.vTask.value = currentVisit.tasks;
+                UI.display.vMsg.textContent = "";
+
+                if(currentVisit.audio) {
+                    UI.display.vAudioSec.classList.remove('hidden');
+                    UI.display.vAudio.src = URL.createObjectURL(currentVisit.audio);
+                } else {
+                    UI.display.vAudioSec.classList.add('hidden');
+                }
+                UI.screens.visit.style.display = 'flex';
+            };
+
+            // IA Logic (Unificado)
+            UI.btns.vTranscribe.onclick = async () => {
+                if(!currentVisit.audio) return;
+                const prov = UI.inputs.confProv.value;
+                UI.display.vMsg.textContent = `A processar (${prov})... aguarde.`;
+                UI.display.vMsg.className = "text-blue-600 text-xs font-bold text-center";
+                
+                try {
+                    // Converte Blob para Base64
+                    const reader = new FileReader();
+                    reader.readAsDataURL(currentVisit.audio);
+                    reader.onloadend = async () => {
+                        const b64 = reader.result.split(',')[1];
+                        const mime = reader.result.split(';')[0].split(':')[1];
+                        
+                        let resultText = "";
+                        
+                        if(prov === 'google') {
+                            const key = UI.inputs.confKeyG.value;
+                            if(!key) throw new Error("Sem chave Google.");
+                            // Fallback System: 2.0 -> 1.5 -> 1.5-8b
+                            const models = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+                            
+                            for (const model of models) {
+                                try {
+                                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({
+                                            contents: [{ parts: [{ text: "Transcreva e formate: ---TRANSCRICAO--- (texto) ---RESUMO--- (resumo) ---TAREFAS--- (lista)" }, { inlineData: { mimeType: mime, data: b64 } }] }]
+                                        })
+                                    });
+                                    if(!res.ok) throw new Error();
+                                    const json = await res.json();
+                                    resultText = json.candidates[0].content.parts[0].text;
+                                    break; // Sucesso
+                                } catch(e) { console.log(model + " falhou."); }
+                            }
+                        } else {
+                            // Groq Logic
+                            const key = UI.inputs.confKeyQ.value;
+                            if(!key) throw new Error("Sem chave Groq.");
+                            const fd = new FormData(); fd.append('file', currentVisit.audio, 'rec.webm'); fd.append('model','whisper-large-v3');
+                            const r1 = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {method:'POST', headers:{'Authorization':`Bearer ${key}`}, body:fd});
+                            const t1 = (await r1.json()).text;
+                            const r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                                method:'POST', headers:{'Authorization':`Bearer ${key}`, 'Content-Type':'application/json'},
+                                body: JSON.stringify({model:"llama-3.3-70b-versatile", messages:[{role:"user", content:`Formate: "${t1}". Saída: ---TRANSCRICAO--- ... ---RESUMO--- ... ---TAREFAS--- ...`}]})
+                            });
+                            resultText = (await r2.json()).choices[0].message.content;
+                        }
+
+                        if(!resultText) throw new Error("Falha na IA.");
+
+                        // Parse
+                        const trans = resultText.match(/---TRANSCRICAO---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || resultText;
+                        const sum = resultText.match(/---RESUMO---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || "";
+                        const task = resultText.match(/---TAREFAS---([\s\S]*?)(?=---|$)/i)?.[1]?.trim() || "";
+
+                        // Update UI & DB
+                        UI.inputs.vTrans.value = trans;
+                        UI.inputs.vSum.value = sum;
+                        UI.inputs.vTask.value = task;
+                        
+                        currentVisit.transcription = trans;
+                        currentVisit.summary = sum;
+                        currentVisit.tasks = task;
+                        await put(STORES.VISIT, currentVisit);
+                        
+                        UI.display.vMsg.textContent = "Sucesso! Guardado.";
+                        UI.display.vMsg.className = "text-green-600 text-xs font-bold text-center";
+                    };
+                } catch(e) {
+                    UI.display.vMsg.textContent = "Erro: " + e.message;
+                    UI.display.vMsg.className = "text-red-600 text-xs font-bold text-center";
+                }
+            };
+
+            UI.btns.vSave.onclick = async () => {
+                currentVisit.transcription = UI.inputs.vTrans.value;
+                currentVisit.summary = UI.inputs.vSum.value;
+                currentVisit.tasks = UI.inputs.vTask.value;
+                await put(STORES.VISIT, currentVisit);
+                alert("Alterações guardadas.");
+            };
+
+            UI.btns.vAddTasks.onclick = async () => {
+                const lines = UI.inputs.vTask.value.split('\n');
+                for(const line of lines) {
+                    const t = line.replace(/^-/,'').trim();
+                    if(t) await add(STORES.TASK, {text:t, completed:false});
+                }
+                renderTasks();
+                alert("Tarefas copiadas para a lista do dia.");
+            };
+
+            UI.btns.vExport.onclick = () => {
+                const txt = `CLIENTE: ${currentVisit.client}\nDATA: ${new Date(currentVisit.date).toLocaleString()}\n\nTRANSCRICAO:\n${UI.inputs.vTrans.value}\n\nRESUMO:\n${UI.inputs.vSum.value}\n\nTAREFAS:\n${UI.inputs.vTask.value}`;
+                const blob = new Blob([txt], {type:'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `visita_${currentVisit.client}.txt`; a.click();
+            };
+
+            // --- 7. DEFINIÇÕES E EXTRAS ---
+            UI.btns.vClose.forEach(b => b.onclick = () => b.closest('.modal').style.display = 'none');
+            UI.btns.settings.onclick = () => UI.screens.settings.style.display = 'flex';
+            
+            function loadConfigs() {
+                UI.inputs.confKeyG.value = localStorage.getItem('keyG') || '';
+                UI.inputs.confKeyQ.value = localStorage.getItem('keyQ') || '';
+                UI.inputs.confProv.value = localStorage.getItem('prov') || 'google';
+                toggleProv();
+            }
+            UI.btns.saveConf.onclick = () => {
+                localStorage.setItem('keyG', UI.inputs.confKeyG.value.trim());
+                localStorage.setItem('keyQ', UI.inputs.confKeyQ.value.trim());
+                localStorage.setItem('prov', UI.inputs.confProv.value);
+                UI.screens.settings.style.display = 'none';
+            };
+            function toggleProv() {
+                const isGroq = UI.inputs.confProv.value === 'groq';
+                $('sec-google').style.display = isGroq ? 'none' : 'block';
+                $('sec-groq').style.display = isGroq ? 'block' : 'none';
+            }
+            UI.inputs.confProv.onchange = toggleProv;
+
+            // Privacidade (Lógica do Clique Duplo Manual)
+            let lastTap = 0;
+            UI.btns.privacy.onclick = () => UI.screens.privacy.style.display = 'flex';
+            UI.screens.privacy.addEventListener('click', (e) => {
+                const cur = new Date().getTime();
+                if (cur - lastTap < 400) { // 400ms para duplo toque
+                    UI.screens.privacy.style.display = 'none';
+                }
+                lastTap = cur;
+                e.preventDefault();
             });
 
-            function openV(id){
-                db.transaction([VISIT_STORE],'readonly').objectStore(VISIT_STORE).get(id).onsuccess=e=>{
-                    const v=e.target.result; currentVisitIdToExport=v.id; currentVisitDataToExport=v;
-                    els.vName.textContent=v.clientName; els.vText.value=v.transcript||''; els.aiSumRes.value=v.aiSummary||''; els.aiTaskRes.value=v.aiTasks||'';
-                    if(v.audioBlob){els.vAudioSec.classList.remove('hidden');els.vAudio.src=URL.createObjectURL(v.audioBlob);}else{els.vAudioSec.classList.add('hidden');}
-                    els.vModal.style.display='flex';
-                }
-            }
-            function askDel(id){deleteConfig={id:id,store:VISIT_STORE};els.delModal.style.display='flex';}
-            els.delCancel.onclick=()=>{els.delModal.style.display='none';};els.delOk.onclick=()=>{db.transaction([deleteConfig.store],'readwrite').objectStore(deleteConfig.store).delete(deleteConfig.id).onsuccess=()=>{els.delModal.style.display='none';loadAll();}};
-            els.vClose.onclick=()=>{els.vModal.style.display='none';};
-            els.settingsBtn.onclick=()=>{els.settingsModal.style.display='flex';};els.settingsClose.onclick=()=>{els.settingsModal.style.display='none';};
-            els.privacyBtn.onclick=()=>{els.privacyOverlay.style.display='flex';};
-            
-            // Privacy double tap fix
-            let lastTap=0; els.privacyOverlay.addEventListener('click',e=>{const cur=new Date().getTime();if(cur-lastTap<500)els.privacyOverlay.style.display='none';lastTap=cur;e.preventDefault();});
-            els.forceUpdateBtn.onclick=()=>{if(confirm("Reset?")){if('serviceWorker'in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));caches.keys().then(ns=>ns.forEach(n=>caches.delete(n)));location.reload(true);}};
-            
-            els.transcribeBtn.onclick = async () => {
-                if(!currentVisitDataToExport?.audioBlob) return;
-                const parsed = await callSmartAI(currentVisitDataToExport.audioBlob);
-                if(parsed) {
-                    els.vText.value = parsed.trans; els.aiSumRes.value = parsed.sum; els.aiTaskRes.value = parsed.tasks;
-                    els.vMsg.textContent = "Processado!"; els.vMsg.className = 'text-green-600';
-                    const tr = db.transaction([VISIT_STORE],'readwrite'); const st = tr.objectStore(VISIT_STORE);
-                    st.get(currentVisitIdToExport).onsuccess = e => { let d=e.target.result; d.transcript=parsed.trans; d.aiSummary=parsed.sum; d.aiTasks=parsed.tasks; st.put(d); };
+            // Reset
+            UI.btns.reset.onclick = () => {
+                if(confirm("Isto apaga o cache e recarrega a app (Dados mantidos). Continuar?")) {
+                    if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(r => r.forEach(i => i.unregister()));
+                    window.location.reload(true);
                 }
             };
-            els.aiAddTasks.onclick=()=>{const l=els.aiTaskRes.value.split('\n').map(t=>t.replace(/^- /,'').trim()).filter(t=>t);l.forEach(t=>saveTask(t));alert(`${l.length} tarefas adicionadas!`);};
-            els.vSave.onclick=()=>{const tr=db.transaction([VISIT_STORE],'readwrite');const st=tr.objectStore(VISIT_STORE);st.get(currentVisitIdToExport).onsuccess=e=>{let d=e.target.result;d.transcript=els.vText.value;d.aiSummary=els.aiSumRes.value;d.aiTasks=els.aiTaskRes.value;st.put(d);els.vMsg.textContent='Salvo.';};};
-            els.vExport.onclick=()=>{if(!currentVisitDataToExport)return;const v=currentVisitDataToExport;const b=new Blob([`CLIENTE: ${v.clientName}\n\nTRANSCRICAO:\n${els.vText.value}\n\nRESUMO:\n${els.aiSumRes.value}\n\nTAREFAS:\n${els.aiTaskRes.value}`],{type:'text/plain'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='relatorio.txt';l.click();};
 
-            initDB();
+            // Import/Export
+            UI.btns.export.onclick = async () => {
+                const data = {
+                    v: await getAll(STORES.VISIT),
+                    t: await getAll(STORES.TASK),
+                    s: await getAll(STORES.SCH)
+                };
+                // Convert Blobs to Base64
+                for(const v of data.v) if(v.audio) v.audio = await new Promise(r => {const fr=new FileReader();fr.readAsDataURL(v.audio);fr.onload=()=>r(fr.result);});
+                
+                const url = URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+                const a = document.createElement('a'); a.href=url; a.download=`backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+            };
+
+            UI.inputs.imp.onchange = (e) => {
+                const f = e.target.files[0];
+                if(!f) return;
+                const fr = new FileReader();
+                fr.onload = async (ev) => {
+                    if(!confirm("Restaurar backup? Dados atuais serão apagados.")) return;
+                    const d = JSON.parse(ev.target.result);
+                    // Clear
+                    await new Promise(r=>{const req=db.transaction(Object.values(STORES),'readwrite');req.oncomplete=r;Object.values(STORES).forEach(s=>req.objectStore(s).clear());});
+                    
+                    // Restore
+                    for(const t of d.t) await add(STORES.TASK, t);
+                    for(const s of d.s) await add(STORES.SCH, s);
+                    for(const v of d.v) {
+                        if(v.audio && typeof v.audio === 'string') {
+                            const arr = v.audio.split(',');
+                            const mime = arr[0].match(/:(.*?);/)[1];
+                            const bstr = atob(arr[1]);
+                            let n = bstr.length; const u8arr = new Uint8Array(n);
+                            while(n--) u8arr[n] = bstr.charCodeAt(n);
+                            v.audio = new Blob([u8arr], {type:mime});
+                        }
+                        delete v.id; // Auto-increment
+                        await add(STORES.VISIT, v);
+                    }
+                    alert("Restaurado!"); window.location.reload();
+                };
+                fr.readAsText(f);
+            };
+
         });
     </script>
 </body>
