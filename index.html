@@ -16,7 +16,7 @@
         .task-completed { text-decoration: line-through; color: #9ca3af; }
         .input-field { @apply border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500; }
         .label-disabled { @apply opacity-50 cursor-not-allowed; }
-        #privacy-overlay { position: fixed; inset: 0; background-color: #000000; z-index: 10000; display: none; align-items: center; justify-content: center; text-align: center; color: #444; font-size: 1.2rem; cursor: pointer; touch-action: manipulation; }
+        #privacy-overlay { position: fixed; inset: 0; background-color: #000000; z-index: 10000; display: none; align-items: center; justify-content: center; text-align: center; color: #333; font-size: 1rem; cursor: pointer; touch-action: manipulation; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -27,7 +27,7 @@
         <header class="flex justify-between items-center p-6 bg-indigo-600 text-white shadow-md">
             <div class="flex-1">
                 <h1 class="text-2xl font-bold tracking-tight">Assistente Externo</h1>
-                <p class="text-indigo-200 text-xs font-medium mt-0.5 opacity-90">v2.0 • by m.almeida</p>
+                <p class="text-indigo-200 text-xs font-medium mt-0.5 opacity-90">v2.0 • by. m.almeida</p>
             </div>
             <div class="flex gap-4">
                 <button id="btn-privacy" class="text-white hover:text-indigo-200 transition flex flex-col items-center">
@@ -49,7 +49,8 @@
                 <h2 class="text-xl font-bold text-gray-800 mb-3">Minhas Tarefas</h2>
                 <div class="flex flex-wrap gap-2 mb-3">
                     <input type="text" id="inp-task" class="block flex-grow input-field px-3 py-2 min-w-[150px]" placeholder="Nova tarefa...">
-                    <input type="date" id="inp-task-date" class="input-field px-3 py-2 w-auto text-sm text-gray-600">
+                    <!-- DATA COM PLACEHOLDER -->
+                    <input type="text" id="inp-task-date" class="input-field px-3 py-2 w-auto text-sm text-gray-600" placeholder="Data (opcional)" onfocus="(this.type='date')" onblur="(this.value ? this.type='date' : this.type='text')">
                     <button id="btn-add-task" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition">+</button>
                 </div>
                 <div id="list-tasks" class="space-y-2 max-h-[300px] overflow-y-auto pr-1 text-sm text-gray-600">A iniciar sistema...</div>
@@ -62,7 +63,8 @@
                 <div id="sec-schedule-form" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input type="text" id="sch-name" class="input-field w-full px-3 py-2" placeholder="Nome do Cliente (Obrigatório)">
-                        <input type="date" id="sch-date" class="input-field w-full px-3 py-2 text-gray-600">
+                        <!-- DATA COM PLACEHOLDER -->
+                        <input type="text" id="sch-date" class="input-field w-full px-3 py-2 text-gray-600" placeholder="Data da Visita" onfocus="(this.type='date')" onblur="(this.value ? this.type='date' : this.type='text')">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input type="text" id="sch-contact" class="input-field w-full px-3 py-2" placeholder="Contato">
@@ -221,7 +223,7 @@
         </div>
     </div>
 
-    <!-- Lógica JS -->
+    <!-- Lógica JS (v43) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const DB_NAME="AssistenteDB", DB_VERSION=9; 
@@ -314,11 +316,10 @@
                     });
 
                     tasks.forEach(t => {
-                        // CORREÇÃO DA DATA v42: Split direto para evitar fuso horário
                         let dateStr = '';
                         if (t.date) {
-                            const parts = t.date.split('-'); // Ex: ["2023", "10", "25"]
-                            const ptDate = `${parts[2]}/${parts[1]}`; // Ex: "25/10"
+                            const parts = t.date.split('-');
+                            const ptDate = `${parts[2]}/${parts[1]}`;
                             dateStr = `<span class="text-xs text-indigo-500 bg-indigo-50 px-2 py-1 rounded mr-2">${ptDate}</span>`;
                         }
                         
@@ -333,7 +334,10 @@
                 if(!db) return alert("A aguardar base de dados...");
                 if(UI.inputs.tIn.value) { 
                     await add(STORES.TASK, {text: UI.inputs.tIn.value, date: UI.inputs.tDate.value || null, completed: false}); 
-                    UI.inputs.tIn.value=''; UI.inputs.tDate.value=''; renderTasks(); 
+                    UI.inputs.tIn.value=''; UI.inputs.tDate.value=''; 
+                    // Hack to reset input type to text to show placeholder
+                    UI.inputs.tDate.type = 'text';
+                    renderTasks(); 
                 }
             };
             window.toggleTask = async (id) => { const t = await get(STORES.TASK, id); t.completed = !t.completed; await put(STORES.TASK, t); renderTasks(); };
@@ -350,11 +354,10 @@
                         return a.name.localeCompare(b.name);
                     });
                     list.forEach(s => {
-                        // CORREÇÃO DA DATA v42
                         let dateBadge = '';
                         if (s.date) {
                              const parts = s.date.split('-'); 
-                             const ptFullDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
+                             const ptFullDate = `${parts[2]}/${parts[1]}/${parts[0]}`; 
                              dateBadge = `<span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full mr-2">${ptFullDate}</span>`;
                         }
                         
@@ -375,6 +378,8 @@
                         date: UI.inputs.sDate.value || null 
                     }); 
                     UI.inputs.sName.value=''; UI.inputs.sDate.value=''; 
+                    // Hack to reset input type
+                    UI.inputs.sDate.type = 'text';
                     renderSch(); 
                     const form = $('sec-schedule-form');
                     if(form) form.classList.add('hidden'); 
@@ -384,9 +389,8 @@
             window.loadSch = async (id) => { const s = await get(STORES.SCH, id); UI.inputs.rName.value=s.name; UI.inputs.rCont.value=s.contact; UI.inputs.rMail.value=s.email; window.scrollTo(0, UI.inputs.rName.offsetTop - 100); };
             window.delSch = async (id) => { await del(STORES.SCH, id); renderSch(); };
 
-            // --- RESTO DO CÓDIGO (GRAVAÇÃO, ETC) MANTIDO IGUAL v41 ---
-            // ... (Mantive a mesma lógica da v41 para baixo, que já estava correta e blindada) ...
-            
+            // --- RESTO IGUAL (GRAVAÇÃO/IA) ---
+            // ... (Mantendo as funcionalidades anteriores que já funcionam bem) ...
             async function renderHist() {
                 try {
                     const list = await getAll(STORES.VISIT);
