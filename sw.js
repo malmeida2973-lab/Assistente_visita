@@ -1,4 +1,4 @@
-const CACHE_NAME = 'assistente-visita-cache-v29'; // ATUALIZADO PARA v29
+const CACHE_NAME = 'assistente-externo-v37';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
@@ -27,6 +27,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Ignora pedidos para a API da Google ou Groq (não queremos cachear estas respostas dinâmicas)
   if (event.request.url.startsWith('http') && !event.request.url.includes('generativelanguage') && !event.request.url.includes('api.groq.com')) {
     event.respondWith(
       caches.open(CACHE_NAME).then(cache => {
